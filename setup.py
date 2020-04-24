@@ -1,19 +1,24 @@
+#!/usr/bin/env python
+
 from setuptools import setup, find_packages  # type: ignore
 
-try:
-    from clickhouse_plantuml import VERSION
-except ModuleNotFoundError:
-    # Dirty hack to allow `pip install .` in virtualenv
-    VERSION = (0, 1)
+pkg_name = 'clickhouse_plantuml'
 
+with open('{}/version.py'.format(pkg_name)) as f:
+    for line in f:
+        if line.startswith('__version__'):
+            delim = '"' if '"' in line else "'"
+            __version__ = line.split(delim)[1]
 
 with open('README.md') as f:
     long_description = f.read()
 
 setup(
-    name='clickhouse-plantuml',
-    version='.'.join(str(d) for d in VERSION),
+    name=pkg_name,
+    version=__version__,  # noqa: F821 from exec
     description='Generates PlantUML diagrams for clickhouse databases',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url='http://github.com/Felixoid/clickhouse-plantuml',
     author='Mikhail f. Shiryaev',
     author_email='mr.felixoid@gmail.com',
@@ -21,7 +26,6 @@ setup(
     install_requires=['clickhouse-driver'],
     packages=find_packages(),
     classifiers=[
-        'Database',
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Intended Audience :: Information Technology',
@@ -31,15 +35,17 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
-        'Scientific/Engineering :: Information Analysis',
-        'Topic :: Scientific/Engineering :: Visualisatino',
+        'Topic :: Database',
+        'Topic :: Scientific/Engineering :: Information Analysis',
+        'Topic :: Scientific/Engineering :: Visualization',
         'Topic :: Software Development :: Documentation',
         'Topic :: Software Development :: Libraries',
     ],
     python_requires='>=3',
+    data_files=[('', ['LICENSE', 'example.png'])],
     entry_points={
         'console_scripts': [
             'clickhouse-plantuml = clickhouse_plantuml.__main__:main'
         ]
-    }
+    },
 )
