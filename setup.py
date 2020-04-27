@@ -41,7 +41,7 @@ setup(
         'Topic :: Software Development :: Documentation',
         'Topic :: Software Development :: Libraries',
     ],
-    python_requires='>=3',
+    python_requires='~=3.5',
     data_files=[('', ['LICENSE', 'example.png'])],
     entry_points={
         'console_scripts': [
