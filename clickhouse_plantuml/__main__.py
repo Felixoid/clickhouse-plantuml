@@ -13,7 +13,10 @@ import logging
 import sys
 
 from argparse import (
-    ArgumentParser, ArgumentDefaultsHelpFormatter, Namespace, FileType
+    ArgumentParser,
+    ArgumentDefaultsHelpFormatter,
+    Namespace,
+    FileType,
 )
 from hashlib import sha1
 from os.path import basename, isfile
@@ -24,7 +27,7 @@ from . import Client, Tables
 from .plantuml import plantuml
 
 logging.basicConfig(
-        format='%(levelname)-8s [%(filename)s:%(lineno)d]:\n%(message)s'
+    format="%(levelname)-8s [%(filename)s:%(lineno)d]:\n%(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -33,92 +36,125 @@ def parse_args() -> Namespace:
     parser = ArgumentParser(
         formatter_class=ArgumentDefaultsHelpFormatter,
         usage="Gets the info about tables' schamas from ClickHouse database "
-        'and generates PlantUML diagram source code.'
+        "and generates PlantUML diagram source code.",
     )
     parser.add_argument(
-        '-v', '--verbose', action='count', default=0,
-        help='set the script verbosity, could be used multiple',
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="set the script verbosity, could be used multiple",
     )
-    clickhouse = parser.add_argument_group('ClickHouse parameters')
+    clickhouse = parser.add_argument_group("ClickHouse parameters")
     clickhouse.add_argument(
-        '--host', default='localhost', help='ClickHouse server hostname',
-    )
-    clickhouse.add_argument(
-        '--port', default=9000, type=int, help='ClickHouse server hostname',
-    )
-    clickhouse.add_argument(
-        '-u', '--user', default='default', help='ClickHouse username',
+        "--host", default="localhost", help="ClickHouse server hostname",
     )
     clickhouse.add_argument(
-        '-p', '--password', default='', help='ClickHouse username',
+        "--port", default=9000, type=int, help="ClickHouse server hostname",
     )
     clickhouse.add_argument(
-        '-d', '--database', dest='databases', action='append', default=[],
-        help='databases to describe. If omitted, `default` database is used',
+        "-u", "--user", default="default", help="ClickHouse username",
     )
     clickhouse.add_argument(
-        '-t', '--table', action='append', dest='tables', default=[],
-        help='tables whitelist to describe. If set, only mentioned tables will'
-        'be queried from the server',
+        "-p", "--password", default="", help="ClickHouse username",
+    )
+    clickhouse.add_argument(
+        "-d",
+        "--database",
+        dest="databases",
+        action="append",
+        default=[],
+        help="databases to describe. If omitted, `default` database is used",
+    )
+    clickhouse.add_argument(
+        "-t",
+        "--table",
+        action="append",
+        dest="tables",
+        default=[],
+        help="tables whitelist to describe. If set, only mentioned tables will"
+        "be queried from the server",
     )
 
-    plantuml = parser.add_argument_group('PlantUml parameters')
+    plantuml = parser.add_argument_group("PlantUml parameters")
     plantuml.add_argument(
-        '-P', '--run-plantuml', action='store_true', dest='run_plantuml',
-        help='if set, plantuml binary will be executed',
+        "-P",
+        "--run-plantuml",
+        action="store_true",
+        dest="run_plantuml",
+        help="if set, plantuml binary will be executed",
     )
     plantuml.add_argument(
-        '-F', '--plantuml-format', choices=[
-            'png', 'svg', 'eps', 'pdf', 'vdx', 'xmi', 'scxml', 'html',
-            'txt', 'utxt', 'latex', 'latex:nopreamble',
+        "-F",
+        "--plantuml-format",
+        choices=[
+            "png",
+            "svg",
+            "eps",
+            "pdf",
+            "vdx",
+            "xmi",
+            "scxml",
+            "html",
+            "txt",
+            "utxt",
+            "latex",
+            "latex:nopreamble",
         ],
-        default='png', help='PlantUML output format',
+        default="png",
+        help="PlantUML output format",
     )
     plantuml.add_argument(
-        '--plantuml-arguments', default='',
-        help='additional parameters to pass into plantuml command'
+        "--plantuml-arguments",
+        default="",
+        help="additional parameters to pass into plantuml command",
     )
 
-    diagram = parser.add_argument_group('diagram parameters')
+    diagram = parser.add_argument_group("diagram parameters")
     diagram.add_argument(
-        '-o', '--text-output', type=FileType('w'), default='-',
-        help='file to write a generated diagram source',
+        "-o",
+        "--text-output",
+        type=FileType("w"),
+        default="-",
+        help="file to write a generated diagram source",
     )
     diagram.add_argument(
-        '-O', '--diagram-output', type=FileType('w'),
-        help='file to write a generated diagram. If `--text-output` is set, '
-        'the default name is calculated as `filename_without_extension`.'
-        '`plantuml-format`. If omitted, the default name is sha1 hexdigest '
-        'out of diagram content.',
+        "-O",
+        "--diagram-output",
+        type=FileType("w"),
+        help="file to write a generated diagram. If `--text-output` is set, "
+        "the default name is calculated as `filename_without_extension`."
+        "`plantuml-format`. If omitted, the default name is sha1 hexdigest "
+        "out of diagram content.",
     )
 
     args = parser.parse_args()
-    args.databases = args.databases or ['default']
+    args.databases = args.databases or ["default"]
     return args
 
 
 def run_plantuml(args: Namespace, diagram: str):
-    diagram_bin = diagram.encode('UTF-8')
+    diagram_bin = diagram.encode("UTF-8")
     if args.run_plantuml and args.diagram_output is None:
         if args.text_output == sys.stdout:
             file_name = sha1(diagram_bin).hexdigest()
-            args.diagram_output = '{}.{}'.format(
+            args.diagram_output = "{}.{}".format(
                 file_name, args.plantuml_format
             )
             if isfile(args.diagram_output):
-                logger.info('File exists, do not run plantuml')
+                logger.info("File exists, do not run plantuml")
                 return
         else:
-            args.diagram_output = '{}.{}'.format(
+            args.diagram_output = "{}.{}".format(
                 basename(args.text_output.name), args.plantuml_format
             )
     logger.debug(args.diagram_output)
-    command = ['plantuml', '-p', '-t' + args.plantuml_format]
+    command = ["plantuml", "-p", "-t" + args.plantuml_format]
     command.extend(args.plantuml_arguments.split())
     proc = Popen(command, stdout=PIPE, stdin=PIPE)
     if proc.stdin is not None:
         proc.stdin.write(diagram_bin)
-    with open(args.diagram_output, 'bw') as out:
+    with open(args.diagram_output, "bw") as out:
         out.write(proc.communicate()[0])
 
 
@@ -126,17 +162,20 @@ def main():
     args = parse_args()
     log_levels = [logging.CRITICAL, logging.WARN, logging.INFO, logging.DEBUG]
     logger.setLevel(log_levels[min(args.verbose, 3)])
-    logger.debug('Arguments are {}'.format(pformat(args.__dict__)))
-    client = Client(host=args.host, port=args.port, user=args.user,
-                    password=args.password)
+    logger.debug("Arguments are {}".format(pformat(args.__dict__)))
+    client = Client(
+        host=args.host, port=args.port, user=args.user, password=args.password
+    )
     tables = Tables(client, args.databases, args.tables)
-    logger.debug('Tables are: {}'.format(pformat(list(map(str, tables)))))
+    logger.debug("Tables are: {}".format(pformat(list(map(str, tables)))))
     if not tables:
-        logger.critical('There are no tables with given parameters')
+        logger.critical("There are no tables with given parameters")
         sys.exit(2)
-    logger.debug('Columns of the first table are {}'.format(
-        pformat([c.__dict__ for c in tables[0].columns])
-    ))
+    logger.debug(
+        "Columns of the first table are {}".format(
+            pformat([c.__dict__ for c in tables[0].columns])
+        )
+    )
     diagram = plantuml(tables)
     args.text_output.write(diagram)
     if args.text_output != sys.stdout:
@@ -146,5 +185,5 @@ def main():
         run_plantuml(args, diagram)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -9,11 +9,21 @@ class Column(object):
     Represents ClickHouse column
     """
 
-    def __init__(self, database: str, table: str, name: str, type: str,
-                 default_kind: str, default_expression: str, comment: str,
-                 compression_codec: str,
-                 is_in_partition_key: bool, is_in_sorting_key: bool,
-                 is_in_primary_key: bool, is_in_sampling_key: bool):
+    def __init__(
+        self,
+        database: str,
+        table: str,
+        name: str,
+        type: str,
+        default_kind: str,
+        default_expression: str,
+        comment: str,
+        compression_codec: str,
+        is_in_partition_key: bool,
+        is_in_sorting_key: bool,
+        is_in_primary_key: bool,
+        is_in_sampling_key: bool,
+    ):
         self.database = database
         self.table = table
         self.name = name
@@ -29,7 +39,7 @@ class Column(object):
 
     @property
     def db_table(self):
-        return '{}.{}'.format(self.database, self.table)
+        return "{}.{}".format(self.database, self.table)
 
     def __str__(self):
         return self.name

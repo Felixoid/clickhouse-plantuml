@@ -14,19 +14,21 @@ def plantuml(tables: Tables):
 def plantuml_header():
     # Credits
     # https://www.red-gate.com/simple-talk/sql/sql-tools/automatically-creating-uml-database-diagrams-for-sql-server/
-    header = '\n'.join((
-        '@startuml',
-        '!define Table(x) class x << (T,mistyrose) >>',
-        '!define View(x) class x << (V,lightblue) >>',
-        '!define MaterializedView(x) class x << (m,orange) >>',
-        '!define Distributed(x) class x << (D,violet) >>',
-        '',
-        'hide empty methods',
-        'hide stereotypes',
-        'skinparam classarrowcolor gray',
-        '',
-        '',
-    ))
+    header = "\n".join(
+        (
+            "@startuml",
+            "!define Table(x) class x << (T,mistyrose) >>",
+            "!define View(x) class x << (V,lightblue) >>",
+            "!define MaterializedView(x) class x << (m,orange) >>",
+            "!define Distributed(x) class x << (D,violet) >>",
+            "",
+            "hide empty methods",
+            "hide stereotypes",
+            "skinparam classarrowcolor gray",
+            "",
+            "",
+        )
+    )
     return header
 
 
@@ -34,78 +36,83 @@ def gen_tables(tables: Tables):
     """
     Generates the PlantUML source code out of the Tables object
     """
-    code = ''
+    code = ""
     for t in tables:
         include_primary = t.sorting_key != t.primary_key
         if include_primary:
-            table_keys = ['partition', 'sorting', 'primary', 'sampling']
+            table_keys = ["partition", "sorting", "primary", "sampling"]
         else:
-            table_keys = ['partition', 'sorting', 'sampling']
+            table_keys = ["partition", "sorting", "sampling"]
 
-        code += '{}({})'.format(table_macros(t.engine), str(t)) + ' {\n'
+        code += "{}({})".format(table_macros(t.engine), str(t)) + " {\n"
 
-        code += 'ENGINE=**{}**\n'.format(t.engine)
+        code += "ENGINE=**{}**\n".format(t.engine)
         if t.engine_config:
-            code += '..engine config..\n'
+            code += "..engine config..\n"
         for k, v in t.engine_config:
-            code += '{}: {}\n'.format(k, v)
+            code += "{}: {}\n".format(k, v)
 
-        if hasattr(t, 'replication_config'):
-            code += '..replication..\n'
+        if hasattr(t, "replication_config"):
+            code += "..replication..\n"
             for k, v in t.replication_config:
-                code += '{}: {}\n'.format(k, v)
+                code += "{}: {}\n".format(k, v)
 
-        code += '==columns==\n'
+        code += "==columns==\n"
         for c in t.columns:
-            code += '{}: {}'.format(c.name, c.type)
+            code += "{}: {}".format(c.name, c.type)
             code += column_keys(c, table_keys)
-            code += '\n'
+            code += "\n"
 
         for k in table_keys:
-            key_string = getattr(t, '{}_key'.format(k))
+            key_string = getattr(t, "{}_key".format(k))
             if key_string:
-                code += '..{}{} key..\n{}\n'.format(key_sign(k), k, key_string)
+                code += "..{}{} key..\n{}\n".format(key_sign(k), k, key_string)
 
-        code += '}\n'
-        code += ''.join('{} -|> {}\n'.format(str(t), d) for d in t.dependencies
-                        if d in tables.as_dict)
+        code += "}\n"
+        code += "".join(
+            "{} -|> {}\n".format(str(t), d)
+            for d in t.dependencies
+            if d in tables.as_dict
+        )
 
-        code += ''.join('{} -|> {}\n'.format(r, str(t))
-                        for r in t.rev_dependencies
-                        if r in tables.as_dict)
+        code += "".join(
+            "{} -|> {}\n".format(r, str(t))
+            for r in t.rev_dependencies
+            if r in tables.as_dict
+        )
 
-        code += '\n'
+        code += "\n"
 
     return code
 
 
 def plantuml_footer():
-    return '@enduml'
+    return "@enduml"
 
 
 def table_macros(table_type: str):
-    if table_type in ('MaterializedView', 'View', 'Distributed'):
+    if table_type in ("MaterializedView", "View", "Distributed"):
         return table_type
-    return 'Table'
+    return "Table"
 
 
 def key_sign(key: str) -> str:
-    sign = '<size:15><&{}></size>'
-    if key == 'partition':
-        return sign.format('list-rich')
-    if key == 'sorting':
-        return sign.format('signal')
-    if key == 'primary':
-        return sign.format('key')
-    if key == 'sampling':
-        return sign.format('collapse-down')
-    return ''
+    sign = "<size:15><&{}></size>"
+    if key == "partition":
+        return sign.format("list-rich")
+    if key == "sorting":
+        return sign.format("signal")
+    if key == "primary":
+        return sign.format("key")
+    if key == "sampling":
+        return sign.format("collapse-down")
+    return ""
 
 
 def column_keys(column: Column, table_keys: List[str]) -> str:
-    keys = ''
+    keys = ""
 
     for key in table_keys:
-        if getattr(column, 'is_in_{}_key'.format(key)):
-            keys += ' {}'.format(key_sign(key))
+        if getattr(column, "is_in_{}_key".format(key)):
+            keys += " {}".format(key_sign(key))
     return keys

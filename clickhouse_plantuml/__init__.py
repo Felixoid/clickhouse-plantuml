@@ -10,4 +10,4 @@ from .tables import Tables
 from .version import __version__
 
 
-__all__ = ['Client', 'Column', 'Table', 'Tables', '__version__']
+__all__ = ["Client", "Column", "Table", "Tables", "__version__"]

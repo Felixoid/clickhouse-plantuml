@@ -37,10 +37,20 @@ class Table(object):
         Engine's arguments
     """
 
-    def __init__(self, client: Client, database: str, name: str,
-                 dependencies: List[str], create_table_query: str,
-                 engine: str, engine_full: str, partition_key: str,
-                 sorting_key: str, primary_key: str, sampling_key: str):
+    def __init__(
+        self,
+        client: Client,
+        database: str,
+        name: str,
+        dependencies: List[str],
+        create_table_query: str,
+        engine: str,
+        engine_full: str,
+        partition_key: str,
+        sorting_key: str,
+        primary_key: str,
+        sampling_key: str,
+    ):
         self.client = client
         self.database = database
         self.name = name
@@ -64,7 +74,7 @@ class Table(object):
         if isinstance(column, Column):
             self.columns.append(column)
         else:
-            raise TypeError('column argument must be a Column')
+            raise TypeError("column argument must be a Column")
 
     def parse_engine(self):
         """
@@ -78,11 +88,11 @@ class Table(object):
         """
         self._parse_engine_config()
         self.engine_config = []  # List[Tuple[str, str]]
-        if self.engine.startswith('Replicated'):
+        if self.engine.startswith("Replicated"):
             self._replicated()
-            engine_method = '_' + self.engine[10:].lower()
+            engine_method = "_" + self.engine[10:].lower()
         else:
-            engine_method = '_' + self.engine.lower()
+            engine_method = "_" + self.engine.lower()
 
         if hasattr(self, engine_method):
             getattr(self, engine_method)()
@@ -92,93 +102,93 @@ class Table(object):
         Creates and fills :attr:`replication_config` for Replicated* engines
         """
         self.replication_config = []  # List[Tuple[str, str]]
-        self.replication_config.append(('zoo_path', self.__engine_args.pop(0)))
-        self.replication_config.append(('replica', self.__engine_args.pop(0)))
+        self.replication_config.append(("zoo_path", self.__engine_args.pop(0)))
+        self.replication_config.append(("replica", self.__engine_args.pop(0)))
 
     def _graphitemergetree(self):
-        self._append_engine_config('rollup_config')
+        self._append_engine_config("rollup_config")
 
     def _replacingmergetree(self):
         if self.__engine_args:
-            self._append_engine_config('version')
+            self._append_engine_config("version")
 
     def _summingmergetree(self):
         if self.__engine_args:
-            self._append_engine_config('version')
+            self._append_engine_config("version")
 
     def _collapsingmergetree(self):
-        self._append_engine_config('sign')
+        self._append_engine_config("sign")
 
     def _versionedcollapsingmergetree(self):
-        self._append_engine_config('sign')
-        self._append_engine_config('version')
+        self._append_engine_config("sign")
+        self._append_engine_config("version")
 
     def _odbc(self):
-        self._append_engine_config('settings')
-        self._append_engine_config('database')
-        self._append_engine_config('table')
+        self._append_engine_config("settings")
+        self._append_engine_config("database")
+        self._append_engine_config("table")
 
     def _jdbc(self):
-        self._append_engine_config('uri')
-        self._append_engine_config('database')
-        self._append_engine_config('table')
+        self._append_engine_config("uri")
+        self._append_engine_config("database")
+        self._append_engine_config("table")
 
     def _mysql(self):
-        self._append_engine_config('host:port')
-        self._append_engine_config('database')
-        self._append_engine_config('table')
-        self._append_engine_config('user')
-        self._append_engine_config('password')
+        self._append_engine_config("host:port")
+        self._append_engine_config("database")
+        self._append_engine_config("table")
+        self._append_engine_config("user")
+        self._append_engine_config("password")
         if self.__engine_args:
-            self._append_engine_config('replace_query')
+            self._append_engine_config("replace_query")
         if self.__engine_args:
-            self._append_engine_config('on_duplicate')
+            self._append_engine_config("on_duplicate")
 
     def _distributed(self):
-        self._append_engine_config('cluster')
-        self._append_engine_config('database')
-        self._append_engine_config('table')
+        self._append_engine_config("cluster")
+        self._append_engine_config("database")
+        self._append_engine_config("table")
         if self.__engine_args:
-            self._append_engine_config('sharding_key')
+            self._append_engine_config("sharding_key")
         if self.__engine_args:
-            self._append_engine_config('policy')
+            self._append_engine_config("policy")
 
         self.rev_dependencies.append(
-            self.engine_config[1][1] + '.' + self.engine_config[2][1]
+            self.engine_config[1][1] + "." + self.engine_config[2][1]
         )
 
     def _merge(self):
-        self._append_engine_config('database')
-        self._append_engine_config('table_re')
+        self._append_engine_config("database")
+        self._append_engine_config("table_re")
         rdeps_rows = self.client.execute(
-            '''
+            """
             SELECT groupArray(concat(database, '.', name)) AS rdeps
             FROM system.tables
             WHERE database = %(db)s
                 AND match(name, %(re)s)
-            ''',
-            {'db': self.engine_config[0][1], 're': self.engine_config[1][1]}
+            """,
+            {"db": self.engine_config[0][1], "re": self.engine_config[1][1]},
         )
-        self.rev_dependencies = list(rdeps_rows['rdeps'])
+        self.rev_dependencies = list(rdeps_rows["rdeps"])
 
     def _join(self):
-        self._append_engine_config('strictness')
-        self._append_engine_config('type')
+        self._append_engine_config("strictness")
+        self._append_engine_config("type")
         k = 1
         while self.__engine_args:
-            self._append_engine_config('k{}'.format(k))
+            self._append_engine_config("k{}".format(k))
             k += 1
 
     def _buffer(self):
-        self._append_engine_config('database')
-        self._append_engine_config('table')
-        self._append_engine_config('num_layers')
-        self._append_engine_config('min_time')
-        self._append_engine_config('max_time')
-        self._append_engine_config('min_rows')
-        self._append_engine_config('max_rows')
-        self._append_engine_config('min_bytes')
-        self._append_engine_config('max_bytes')
+        self._append_engine_config("database")
+        self._append_engine_config("table")
+        self._append_engine_config("num_layers")
+        self._append_engine_config("min_time")
+        self._append_engine_config("max_time")
+        self._append_engine_config("min_rows")
+        self._append_engine_config("max_rows")
+        self._append_engine_config("min_bytes")
+        self._append_engine_config("max_bytes")
 
     def _append_engine_config(self, name):
         "Dangerous method, doesn't check if :attr:`__engine_args` is empty"
@@ -194,24 +204,24 @@ class Table(object):
         stack = 0
         for tok in tokens:
             exact_type = tok_name[tok.exact_type]
-            if exact_type == 'LPAR':
+            if exact_type == "LPAR":
                 # Counting config depth
                 stack += 1
                 config_element = tok.string
                 if stack == 1:
                     # If it's the first level - continue
                     continue
-            elif exact_type == 'RPAR':
+            elif exact_type == "RPAR":
                 stack -= 1
                 config_element = tok.string
                 if stack == 0:
                     # The config is over
                     break
-            elif exact_type == 'COMMA' and stack == 1:
+            elif exact_type == "COMMA" and stack == 1:
                 # Collect commas from subconfigs
-                engine_args.append('')
+                engine_args.append("")
                 continue
-            elif exact_type == 'STRING':
+            elif exact_type == "STRING":
                 # Get strings from raw config strings
                 config_element = eval(tok.string)
             else:
@@ -221,11 +231,11 @@ class Table(object):
                 continue
 
             if not engine_args:
-                engine_args.append('')
+                engine_args.append("")
 
             engine_args[-1] += config_element
 
         self.__engine_args = engine_args
 
     def __str__(self):
-        return '{}.{}'.format(self.database, self.name)
+        return "{}.{}".format(self.database, self.name)
