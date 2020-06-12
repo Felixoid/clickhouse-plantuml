@@ -26,10 +26,13 @@ from subprocess import Popen, PIPE
 from . import Client, Tables
 from .plantuml import plantuml
 
-logging.basicConfig(
-    format="%(levelname)-8s [%(filename)s:%(lineno)d]:\n%(message)s"
+logger = logging.getLogger("clickhouse-plantuml")
+formatter = logging.Formatter(
+    "%(levelname)-8s [%(filename)s:%(lineno)d]:\n%(message)s"
 )
-logger = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 def parse_args() -> Namespace:

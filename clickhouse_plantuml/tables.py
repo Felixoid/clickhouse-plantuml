@@ -3,8 +3,11 @@
 # License: Apache-2.0
 # Copyright (C) 2020 Mikhail f. Shiryaev
 
+import logging
 from typing import List
 from . import Client, Column, Table
+
+logger = logging.getLogger("clickhouse-plantuml")
 
 
 class Tables(list):
@@ -104,6 +107,7 @@ class Tables(list):
             return
 
         for i in inners:
+            logger.debug("{} config: {}".format(i.name, i.engine_config))
             mv_name = i.name.lstrip(".inner.")
             mv = self.as_dict["{}.{}".format(i.database, mv_name)]
             # Rename table name for each mat_view's column
