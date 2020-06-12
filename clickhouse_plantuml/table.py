@@ -39,7 +39,6 @@ class Table(object):
 
     def __init__(
         self,
-        client: Client,
         database: str,
         name: str,
         dependencies: List[str],
@@ -51,7 +50,6 @@ class Table(object):
         primary_key: str,
         sampling_key: str,
     ):
-        self.client = client
         self.database = database
         self.name = name
         self.dependencies = dependencies
@@ -64,19 +62,22 @@ class Table(object):
         self.primary_key = primary_key
         self.sampling_key = sampling_key
         self.columns = []  # type: List[Column]
-        self.parse_engine()
-        self._parse_engine_config()
 
     def add_column(self, column: Column):
         """
         Add a column to self.columns
         """
-        if isinstance(column, Column):
-            self.columns.append(column)
-        else:
+        if not isinstance(column, Column):
             raise TypeError("column argument must be a Column")
+        elif not str(self) == column.db_table:
+            raise KeyError(
+                "column {} argument must belong to table: {} not {}".format(
+                    str(column), column.db_table, str(self)
+                )
+            )
+        self.columns.append(column)
 
-    def parse_engine(self):
+    def parse_engine(self, client: Optional[Client] = None):
         """
         Parses :attr:`engine_full` and gets key-value parameters for known
         tables engines. Adds new attributes.
@@ -86,6 +87,7 @@ class Table(object):
         engine_config : `List[Tuple[str, str]]`
             ordered key-velue parameters for engine
         """
+        self._client = client or None
         self._parse_engine_config()
         self.engine_config = []  # type: List[Tuple[str, str]]
         self.replication_config = []  # type: List[Tuple[str, str]]
@@ -160,7 +162,7 @@ class Table(object):
     def _merge(self):
         self._append_engine_config("database")
         self._append_engine_config("table_re")
-        rdeps_rows = self.client.execute(
+        rdeps_rows = self._client.execute(
             """
             SELECT groupArray(concat(database, '.', name)) AS rdeps
             FROM system.tables

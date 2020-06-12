@@ -57,7 +57,9 @@ class Tables(list):
             query = query.format(name_clause="")
             data = self.client.execute_dict(query, {"ds": tuple(databases)},)
 
-        self.extend(Table(client=self.client, **r) for r in data)
+        self.extend(Table(**r) for r in data)
+        for t in self:
+            t.parse_engine(self.client)
         self.as_dict = {str(t): t for t in self}
 
     def _get_columns(self):
