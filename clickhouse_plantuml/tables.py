@@ -114,12 +114,14 @@ class Tables(list):
             for c in i.columns:
                 c.table = mv_name
 
+            mv.engine_config = [("sub_engine", i.engine)] + i.engine_config
             for attr in (
                 "partition_key",
                 "sorting_key",
                 "primary_key",
                 "sampling_key",
                 "columns",
+                "replication_config",
             ):
                 setattr(mv, attr, getattr(i, attr))
 

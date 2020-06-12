@@ -3,7 +3,7 @@
 # License: Apache-2.0
 # Copyright (C) 2020 Mikhail f. Shiryaev
 
-from typing import List
+from typing import List, Tuple, Optional
 from . import Client, Column
 from token import tok_name
 from tokenize import generate_tokens
@@ -87,7 +87,8 @@ class Table(object):
             ordered key-velue parameters for engine
         """
         self._parse_engine_config()
-        self.engine_config = []  # List[Tuple[str, str]]
+        self.engine_config = []  # type: List[Tuple[str, str]]
+        self.replication_config = []  # type: List[Tuple[str, str]]
         if self.engine.startswith("Replicated"):
             self._replicated()
             engine_method = "_" + self.engine[10:].lower()
@@ -101,7 +102,6 @@ class Table(object):
         """
         Creates and fills :attr:`replication_config` for Replicated* engines
         """
-        self.replication_config = []  # List[Tuple[str, str]]
         self.replication_config.append(("zoo_path", self.__engine_args.pop(0)))
         self.replication_config.append(("replica", self.__engine_args.pop(0)))
 

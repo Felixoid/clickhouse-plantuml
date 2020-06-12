@@ -52,10 +52,10 @@ def gen_tables(tables: Tables):
         for k, v in t.engine_config:
             code += "{}: {}\n".format(k, v)
 
-        if hasattr(t, "replication_config"):
+        if t.replication_config:
             code += "..replication..\n"
-            for k, v in t.replication_config:
-                code += "{}: {}\n".format(k, v)
+        for k, v in t.replication_config:
+            code += "{}: {}\n".format(k, v)
 
         code += "==columns==\n"
         for c in t.columns:
