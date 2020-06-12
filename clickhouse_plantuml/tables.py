@@ -108,7 +108,7 @@ class Tables(list):
 
         for i in inners:
             logger.debug("{} config: {}".format(i.name, i.engine_config))
-            mv_name = i.name.lstrip(".inner.")
+            mv_name = i.name[7:]  # Strip .inner.
             mv = self.as_dict["{}.{}".format(i.database, mv_name)]
             # Rename table name for each mat_view's column
             for c in i.columns:
