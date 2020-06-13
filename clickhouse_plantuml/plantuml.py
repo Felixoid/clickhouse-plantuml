@@ -3,7 +3,7 @@
 # License: Apache-2.0
 # Copyright (C) 2020 Mikhail f. Shiryaev
 
-from . import Tables, Column
+from . import Column, Table, Tables
 from typing import List
 
 
@@ -17,6 +17,8 @@ def plantuml_header():
     header = "\n".join(
         (
             "@startuml",
+            "' This diagram is generated with "
+            "https://github.com/Felixoid/clickhouse-plantuml",
             "!define Table(x) class x << (T,mistyrose) >>",
             "!define View(x) class x << (V,lightblue) >>",
             "!define MaterializedView(x) class x << (m,orange) >>",
@@ -38,37 +40,32 @@ def gen_tables(tables: Tables):
     """
     code = ""
     for t in tables:
-        include_primary = t.sorting_key != t.primary_key
-        if include_primary:
-            table_keys = ["partition", "sorting", "primary", "sampling"]
-        else:
-            table_keys = ["partition", "sorting", "sampling"]
+        code += gen_table(t)
 
-        code += "{}({})".format(table_macros(t.engine), str(t)) + " {\n"
+    code += gen_dependencies(tables)
+    return code
 
-        code += "ENGINE=**{}**\n".format(t.engine)
-        if t.engine_config:
-            code += "..engine config..\n"
-        for k, v in t.engine_config:
-            code += "{}: {}\n".format(k, v)
 
-        if t.replication_config:
-            code += "..replication..\n"
-        for k, v in t.replication_config:
-            code += "{}: {}\n".format(k, v)
+def plantuml_footer():
+    return "@enduml\n"
 
-        code += "==columns==\n"
-        for c in t.columns:
-            code += "{}: {}".format(c.name, c.type)
-            code += column_keys(c, table_keys)
-            code += "\n"
 
-        for k in table_keys:
-            key_string = getattr(t, "{}_key".format(k))
-            if key_string:
-                code += "..{}{} key..\n{}\n".format(key_sign(k), k, key_string)
+def gen_table(table: Table) -> str:
+    t = table
+    # Table header
+    code = "{}({}) {{\n".format(table_macros(t.engine), str(t))
 
-        code += "}\n"
+    code += gen_table_engine(t)
+    code += gen_table_columns(t)
+
+    # Table footer
+    code += "}\n\n"
+    return code
+
+
+def gen_dependencies(tables: Tables) -> str:
+    code = ""
+    for t in tables:
         code += "".join(
             "{} -|> {}\n".format(str(t), d)
             for d in t.dependencies
@@ -80,20 +77,48 @@ def gen_tables(tables: Tables):
             for r in t.rev_dependencies
             if r in tables.as_dict
         )
-
-        code += "\n"
-
     return code
-
-
-def plantuml_footer():
-    return "@enduml\n"
 
 
 def table_macros(table_type: str):
     if table_type in ("MaterializedView", "View", "Distributed"):
         return table_type
     return "Table"
+
+
+def gen_table_engine(table: Table) -> str:
+    t = table
+    code = "ENGINE=**{}**\n".format(t.engine)
+    if t.engine_config:
+        code += "..engine config..\n"
+    for k, v in t.engine_config:
+        code += "{}: {}\n".format(k, v)
+
+    if t.replication_config:
+        code += "..replication..\n"
+    for k, v in t.replication_config:
+        code += "{}: {}\n".format(k, v)
+
+    return code
+
+
+def gen_table_columns(table: Table) -> str:
+    t = table
+    table_keys = ["partition", "sorting", "sampling"]
+    if t.sorting_key != t.primary_key:
+        # If primary != sorting, it's worth to append it
+        table_keys.insert(2, "primary")
+
+    code = "==columns==\n"
+    for c in t.columns:
+        code += "{}: {}{}\n".format(c.name, c.type, column_keys(c, table_keys))
+
+    for k in table_keys:
+        key_string = getattr(t, "{}_key".format(k))
+        if key_string:
+            code += "..{}{} key..\n{}\n".format(key_sign(k), k, key_string)
+
+    return code
 
 
 def key_sign(key: str) -> str:
@@ -110,9 +135,9 @@ def key_sign(key: str) -> str:
 
 
 def column_keys(column: Column, table_keys: List[str]) -> str:
-    keys = ""
+    code = ""
 
     for key in table_keys:
         if getattr(column, "is_in_{}_key".format(key)):
-            keys += " {}".format(key_sign(key))
-    return keys
+            code += " {}".format(key_sign(key))
+    return code
