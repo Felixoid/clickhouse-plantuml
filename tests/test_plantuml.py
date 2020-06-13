@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 from clickhouse_plantuml import plantuml as p
 
 
@@ -42,6 +43,9 @@ class TestPlantuml(unittest.TestCase):
     def test_gen_tables(self):
         # The substatements will be testet separately
         assert p.gen_tables([]) == ""
+        with patch.object(p, "gen_table", return_value="") as mock:
+            assert p.gen_tables(self.test_tables) == ""
+            mock.assert_called_once_with(self.test_table)
 
     def test_plantuml_footer(self):
         assert p.plantuml_footer() == "@enduml\n"
