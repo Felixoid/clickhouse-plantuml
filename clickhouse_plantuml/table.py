@@ -99,6 +99,7 @@ class Table(object):
 
         if hasattr(self, engine_method):
             getattr(self, engine_method)()
+        delattr(self, "_client")
 
     def _replicated(self):
         """
@@ -221,6 +222,10 @@ class Table(object):
                     break
             elif exact_type == "COMMA" and stack == 1:
                 # Collect commas from subconfigs
+                # This is error prune in case of wrong config, e.g.:
+                # SomeEngine('parameter1',)
+                # But this is comming from ClickHouse server,
+                # so we should be safe
                 engine_args.append("")
                 continue
             elif exact_type == "STRING":
@@ -230,6 +235,7 @@ class Table(object):
                 config_element = tok.string
 
             if not stack:
+                # continue unless we're in config parenthesis
                 continue
 
             if not engine_args:
