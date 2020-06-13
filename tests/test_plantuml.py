@@ -18,7 +18,7 @@ class TestPlantuml(unittest.TestCase):
         )
 
     def test_plantuml_footer(self):
-        assert plantuml.plantuml_footer() == "@enduml"
+        assert plantuml.plantuml_footer() == "@enduml\n"
 
     def test_table_macros(self):
         assert plantuml.table_macros("MaterializedView") == "MaterializedView"

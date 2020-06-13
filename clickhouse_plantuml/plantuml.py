@@ -87,7 +87,7 @@ def gen_tables(tables: Tables):
 
 
 def plantuml_footer():
-    return "@enduml"
+    return "@enduml\n"
 
 
 def table_macros(table_type: str):
