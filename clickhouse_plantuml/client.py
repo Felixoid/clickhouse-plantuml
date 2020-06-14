@@ -22,6 +22,7 @@ class Client(OriginalClient):
 
     def execute_iter_dict(self, *args, **kwargs):
         kwargs["with_column_types"] = True
-        result, columns = self.execute(*args, **kwargs)
-        for r in result:
+        rows = self.execute_iter(*args, **kwargs)
+        columns = next(rows)
+        for r in rows:
             yield {columns[i][0]: v for i, v in enumerate(r)}

@@ -91,12 +91,14 @@ class Tables(MutableSequence):
             query = query.format(name_clause="AND name IN %(ns)s")
             # Here's a trick to get both normal and
             tables += [".inner." + t for t in tables]
-            data = self.client.execute_dict(
+            data = self.client.execute_iter_dict(
                 query, {"ds": tuple(databases), "ns": tuple(tables)}
             )
         else:
             query = query.format(name_clause="")
-            data = self.client.execute_dict(query, {"ds": tuple(databases)},)
+            data = self.client.execute_iter_dict(
+                query, {"ds": tuple(databases)},
+            )
 
         self.extend(Table(**r) for r in data)
         for t in self:
@@ -110,7 +112,7 @@ class Tables(MutableSequence):
             return
         tables = {t.name for t in self}
         databases = {t.database for t in self}
-        columns_data = self.client.execute_dict(
+        columns_data = self.client.execute_iter_dict(
             """
             SELECT
                 database,
