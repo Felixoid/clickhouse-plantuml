@@ -35,7 +35,9 @@ class TestPlantuml(unittest.TestCase):
         del self.test_tables
 
     def test_plantuml(self):
-        assert p.plantuml([]) == p.plantuml_header() + p.plantuml_footer()
+        assert (
+            p.plantuml_tables([]) == p.plantuml_header() + p.plantuml_footer()
+        )
 
     def test_plantuml_header(self):
         assert p.plantuml_header() == (
@@ -53,7 +55,9 @@ class TestPlantuml(unittest.TestCase):
             "\n"
         )
 
-    @patch.object(p, "gen_dependencies", return_value="mocked_dependencies")
+    @patch.object(
+        p, "gen_tables_dependencies", return_value="mocked_dependencies"
+    )
     @patch.object(p, "gen_table", return_value="mocked_table")
     def test_gen_tables(self, mock_table, mock_dependencies):
         # The substatements will be testet separately
@@ -79,7 +83,7 @@ class TestPlantuml(unittest.TestCase):
         mock_engine.assert_called_once_with(self.test_table)
         mock_columns.assert_called_once_with(self.test_table)
 
-    def test_gen_dependencies(self):
+    def test_gen_tables_dependencies(self):
         another_table = dict(self.test_table_data)
         another_table.update(
             {
@@ -92,7 +96,7 @@ class TestPlantuml(unittest.TestCase):
         tables.append(p.Table(**another_table))
         tables[0].rev_dependencies = ["test_database.test_table"]
         tables[1].rev_dependencies = ["database.table"]
-        assert p.gen_dependencies(tables) == (
+        assert p.gen_tables_dependencies(tables) == (
             "test_database.test_table -|> database.table\n"
             "test_database.test_table -|> test_database.test_table\n"
             "database.table -|> test_database.test_table\n"
@@ -151,12 +155,12 @@ class TestPlantuml(unittest.TestCase):
         )
 
     def test_key_sign(self):
-        assert p.key_sign("any random thing") == ""
+        assert p.column_key_sign("any random thing") == ""
         sign = "<size:15><&{}></size>"
-        assert p.key_sign("partition") == sign.format("list-rich")
-        assert p.key_sign("primary") == sign.format("key")
-        assert p.key_sign("sampling") == sign.format("collapse-down")
-        assert p.key_sign("sorting") == sign.format("signal")
+        assert p.column_key_sign("partition") == sign.format("list-rich")
+        assert p.column_key_sign("primary") == sign.format("key")
+        assert p.column_key_sign("sampling") == sign.format("collapse-down")
+        assert p.column_key_sign("sorting") == sign.format("signal")
 
     def test_column_keys(self):
         col = DummyColumn()

@@ -24,7 +24,7 @@ from pprint import pformat
 from subprocess import Popen, PIPE
 
 from . import Client, Tables
-from .plantuml import plantuml
+from .plantuml import plantuml_tables
 
 logger = logging.getLogger("clickhouse-plantuml")
 formatter = logging.Formatter(
@@ -179,7 +179,7 @@ def main():
             pformat([c.__dict__ for c in tables[0].columns])
         )
     )
-    diagram = plantuml(tables)
+    diagram = plantuml_tables(tables)
     args.text_output.write(diagram)
     if args.text_output != sys.stdout:
         args.text_output.close()

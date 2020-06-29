@@ -7,7 +7,7 @@ from . import Column, Table, Tables
 from typing import List
 
 
-def plantuml(tables: Tables):
+def plantuml_tables(tables: Tables):
     return plantuml_header() + gen_tables(tables) + plantuml_footer()
 
 
@@ -42,7 +42,7 @@ def gen_tables(tables: Tables):
     for t in tables:
         code += gen_table(t)
 
-    code += gen_dependencies(tables)
+    code += gen_tables_dependencies(tables)
     return code
 
 
@@ -63,7 +63,7 @@ def gen_table(table: Table) -> str:
     return code
 
 
-def gen_dependencies(tables: Tables) -> str:
+def gen_tables_dependencies(tables: Tables) -> str:
     code = ""
     for t in tables:
         code += "".join(
@@ -116,12 +116,14 @@ def gen_table_columns(table: Table) -> str:
     for k in table_keys:
         key_string = getattr(t, "{}_key".format(k))
         if key_string:
-            code += "..{}{} key..\n{}\n".format(key_sign(k), k, key_string)
+            code += "..{}{} key..\n{}\n".format(
+                column_key_sign(k), k, key_string
+            )
 
     return code
 
 
-def key_sign(key: str) -> str:
+def column_key_sign(key: str) -> str:
     sign = "<size:15><&{}></size>"
     if key == "partition":
         return sign.format("list-rich")
@@ -139,5 +141,5 @@ def column_keys(column: Column, table_keys: List[str]) -> str:
 
     for key in table_keys:
         if getattr(column, "is_in_{}_key".format(key)):
-            code += " {}".format(key_sign(key))
+            code += " {}".format(column_key_sign(key))
     return code
