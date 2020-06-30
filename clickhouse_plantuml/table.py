@@ -192,6 +192,9 @@ class Table(object):
         self._append_engine_config("max_rows")
         self._append_engine_config("min_bytes")
         self._append_engine_config("max_bytes")
+        self.dependencies.append(
+            "{}.{}".format(self.engine_config[0][1], self.engine_config[1][1])
+        )
 
     def _append_engine_config(self, name):
         "Dangerous method, doesn't check if :attr:`__engine_args` is empty"

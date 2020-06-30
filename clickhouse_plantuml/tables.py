@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Mikhail f. Shiryaev
 
 import logging
+import re
 from typing import List, Dict
 from collections.abc import MutableSequence
 from . import Client, Column, Table
@@ -141,24 +142,46 @@ class Tables(MutableSequence):
         """
         MATERIALIZED VIEW is presented in a database as two tables:
             - `database`.`mat_view_name` - the view
+        and
             - `database`.`.inner.mat_view_name` - table with data
+            or
+            - `database`.`data_table_name` - particular table name if MV is
+                created as `CREATE MATERIALIZED VIEW d.t TO d.data_table_name`
 
         This method applies inner table `*_key` and `columns` attributes to the
         MaterializedVeiw one and deletes inner from self
         """
-        inners = tuple(t for t in self if t.name.startswith(".inner."))
-        if not inners:
+
+        mat_views = tuple(t for t in self if t.engine == "MaterializedView")
+        if not mat_views:
             return
 
-        for i in inners:
-            logger.debug("{} config: {}".format(i.name, i.engine_config))
-            mv_name = i.name[7:]  # Strip .inner.
-            mv = self["{}.{}".format(i.database, mv_name)]
-            # Rename table name for each mat_view's column
-            for c in i.columns:
-                c.table = mv_name
+        pattern = re.compile(r"^CREATE MATERIALIZED VIEW \S+ TO (\S+)")
+        for mv in mat_views:
+            logger.debug("{} config: {}".format(mv.name, mv.engine_config))
+            match = re.search(pattern, mv.create_table_query)
+            if match:
+                # MV is created TO specific data table
+                data_table = match[1]
+            else:
+                # MV is created to the default .inner. data table
+                data_table = "{}..inner.{}".format(mv.database, mv.name)
+            if data_table not in self.as_dict:
+                # The data table is not in the tables list
+                # Possible reason: it's in another database or not in the
+                # `--tables` CLI arguments
+                continue
 
-            mv.engine_config = [("sub_engine", i.engine)] + i.engine_config
+            data_table = self[data_table]
+            # Rename table name for each mat_view's column
+            # otherwise we won't be able to add them there
+            for c in data_table.columns:
+                c.table = str(mv)
+
+            mv.engine_config = [
+                ("data_table_engine", data_table.engine),
+                ("data_table_name", str(data_table)),
+            ] + data_table.engine_config
             for attr in (
                 "partition_key",
                 "sorting_key",
@@ -167,6 +190,6 @@ class Tables(MutableSequence):
                 "columns",
                 "replication_config",
             ):
-                setattr(mv, attr, getattr(i, attr))
+                setattr(mv, attr, getattr(data_table, attr))
 
-            self.remove(i)
+            self.remove(data_table)
