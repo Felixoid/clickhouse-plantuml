@@ -179,8 +179,8 @@ class Tables(MutableSequence):
                 c.table = str(mv)
 
             mv.engine_config = [
-                ("data_table_engine", data_table.engine),
                 ("data_table_name", str(data_table)),
+                ("data_table_engine", data_table.engine),
             ] + data_table.engine_config
             for attr in (
                 "partition_key",
