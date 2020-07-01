@@ -25,6 +25,10 @@ setup(
     author_email="mr.felixoid@gmail.com",
     license="License :: OSI Approved :: Apache Software License",
     install_requires=["clickhouse-driver"],
+    extras_require={
+        "tests": ["pytest", "pytest-docker", "flake8"],
+        "black": ["black", "pytest-black"],
+    },
     packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",
