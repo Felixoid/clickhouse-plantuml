@@ -19,7 +19,7 @@ from argparse import (
     FileType,
 )
 from hashlib import sha1
-from os.path import basename, isfile
+from os.path import isfile, splitext
 from pprint import pformat
 from subprocess import Popen, PIPE
 
@@ -145,13 +145,17 @@ def run_plantuml(args: Namespace, diagram: str):
                 file_name, args.plantuml_format
             )
             if isfile(args.diagram_output):
-                logger.info("File exists, do not run plantuml")
+                logger.info(
+                    "File {} exists, do not run plantuml".format(
+                        args.diagram_output
+                    )
+                )
                 return
         else:
             args.diagram_output = "{}.{}".format(
-                basename(args.text_output.name), args.plantuml_format
+                splitext(args.text_output.name)[0], args.plantuml_format,
             )
-    logger.debug(args.diagram_output)
+    logger.info("Generating file {}".format(args.diagram_output))
     command = ["plantuml", "-p", "-t" + args.plantuml_format]
     command.extend(args.plantuml_arguments.split())
     proc = Popen(command, stdout=PIPE, stdin=PIPE)
