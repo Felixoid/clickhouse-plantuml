@@ -71,13 +71,13 @@ class TestPlantuml(unittest.TestCase):
     def test_plantuml_footer(self):
         assert p.plantuml_footer() == "@enduml\n"
 
-    @patch.object(p, "gen_table_columns", return_value="mocked_columns")
-    @patch.object(p, "gen_table_engine", return_value="mocked_engine")
+    @patch.object(p, "gen_table_columns", return_value="mocked_columns\n")
+    @patch.object(p, "gen_table_engine", return_value="mocked_engine\n")
     def test_gen_table(self, mock_engine, mock_columns):
         assert p.gen_table(self.test_table) == (
             "Table(test_database.test_table) {\n"
-            "mocked_engine"
-            "mocked_columns"
+            "  mocked_engine\n"
+            "  mocked_columns\n"
             "}\n\n"
         )
         mock_engine.assert_called_once_with(self.test_table)
