@@ -47,7 +47,7 @@ setup(
         "Topic :: Software Development :: Libraries",
     ],
     python_requires="~=3.5",
-    data_files=[("", ["LICENSE", "example.png"])],
+    data_files=[("", ["LICENSE", "docs/example.png"])],
     entry_points={
         "console_scripts": [
             "clickhouse-plantuml = clickhouse_plantuml.__main__:main"

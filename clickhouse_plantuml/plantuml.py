@@ -55,8 +55,8 @@ def gen_table(table: Table) -> str:
     # Table header
     code = "{}({}) {{\n".format(table_macros(t.engine), str(t))
 
-    code += gen_table_engine(t)
-    code += gen_table_columns(t)
+    code += addSpaces(gen_table_engine(t))
+    code += addSpaces(gen_table_columns(t))
 
     # Table footer
     code += "}\n\n"
@@ -143,3 +143,8 @@ def column_keys(column: Column, table_keys: List[str]) -> str:
         if getattr(column, "is_in_{}_key".format(key)):
             code += " {}".format(column_key_sign(key))
     return code
+
+
+def addSpaces(lines: str, amount: int = 2) -> str:
+    indent = " " * amount
+    return indent + indent.join(lines.splitlines(True))
