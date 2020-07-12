@@ -20,7 +20,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install setuptools wheel twine
-        pip install -r requirements.txt
+        pip install .
     - name: Lint with flake8
       run: |
         pip install flake8
@@ -30,9 +30,29 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pip install pytest
+        pip install '.[tests]'
         pytest
+    - name: Check the version is updated
+      run: |
+        REF='${{ github.ref }}'
+        python setup.py egg_info
+        TAG="${REF#refs/tags/}"
+        PKG_NAME=$(sed '/^Name: /s///p; d' *.egg-info/PKG-INFO)
+        VERSION=$(sed '/^Version: /s///p; d' *.egg-info/PKG-INFO)
+        echo ::set-env name=PKG_NAME::"${PKG_NAME}"
+        echo ::set-env name=VERSION::"${VERSION}"
+        if ! [ "${TAG}" = "v${VERSION}" ]; then
+          echo "Tag ${TAG} does not match the package version ${VERSION}" >&2
+          exit 1
+        fi
+    - name: Check the package is not uploaded yet
+      id: check_pkg_exists
+      continue-on-error: true
+      run: |
+        echo If this step fails, that means the package already uploaded and a publishing should be skipped
+        pip download --no-deps "${PKG_NAME}==${VERSION}" && exit 1 || exit 0
     - name: Build and publish
+      if: ${{ steps.check_pkg_exists.outcome == 'success' }}
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
