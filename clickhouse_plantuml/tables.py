@@ -22,6 +22,7 @@ class Tables(MutableSequence):
         client: Client,
         databases: List[str] = None,
         tables: List[str] = None,
+        merge_matviews: bool = True
     ):
         self.client = client
         self.__list = list()  # type: List[Table]
@@ -29,7 +30,8 @@ class Tables(MutableSequence):
         if databases:
             self._get_tables(databases, tables)
             self._get_columns()
-            self._merge_matviews()
+            if merge_matviews:
+                self._merge_matviews()
 
     def __delitem__(self, i):
         if isinstance(i, int):

@@ -38,7 +38,7 @@ logger.addHandler(handler)
 def parse_args() -> Namespace:
     parser = ArgumentParser(
         formatter_class=ArgumentDefaultsHelpFormatter,
-        usage="Gets the info about tables' schamas from ClickHouse database "
+        usage="Gets the info about tables' schemas from ClickHouse database "
         "and generates PlantUML diagram source code.",
     )
     parser.add_argument(
@@ -77,6 +77,12 @@ def parse_args() -> Namespace:
         default=[],
         help="tables whitelist to describe. If set, only mentioned tables will"
         "be queried from the server",
+    )
+    clickhouse.add_argument(
+        "--no-merge-mat-views",
+        action="store_false",
+        dest="merge_matviews",
+        help="if set, target tables of mat views will not be removed",
     )
 
     plantuml = parser.add_argument_group("PlantUml parameters")
@@ -173,7 +179,7 @@ def main():
     client = Client(
         host=args.host, port=args.port, user=args.user, password=args.password
     )
-    tables = Tables(client, args.databases, args.tables)
+    tables = Tables(client, args.databases, args.tables, args.merge_matviews)
     logger.debug("Tables are: {}".format(pformat(list(map(str, tables)))))
     if not tables:
         logger.critical("There are no tables with given parameters")
