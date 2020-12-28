@@ -45,6 +45,13 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install '.[tests,black]'
+    - uses: jitterbit/get-changed-files@v1
+      id: files
+      with:
+        format: 'json'
     - name: Test black formatting with pytest
       run: |
-        pytest --black
+        readarray -t files <<< $(jq -r '.[]|select(. | endswith(".py"))' <<< '${{ steps.files.outputs.added_modified }}')
+        for file in ${files[@]}; do
+          pytest --black "$file"
+        done
