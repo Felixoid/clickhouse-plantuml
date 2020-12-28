@@ -149,7 +149,7 @@ class Tables(MutableSequence):
                 created as `CREATE MATERIALIZED VIEW d.t TO d.data_table_name`
 
         This method applies inner table `*_key` and `columns` attributes to the
-        MaterializedVeiw one and deletes inner from self
+        MaterializedView one and deletes inner from self
         """
 
         mat_views = tuple(t for t in self if t.engine == "MaterializedView")
