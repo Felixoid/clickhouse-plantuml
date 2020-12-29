@@ -24,7 +24,6 @@ def plantuml_header():
             "!define MaterializedView(x) class x << (m,orange) >>",
             "!define Distributed(x) class x << (D,violet) >>",
             "",
-            "left to right direction",
             "hide empty methods",
             "hide stereotypes",
             "skinparam classarrowcolor gray",
