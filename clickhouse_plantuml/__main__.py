@@ -179,7 +179,10 @@ def main():
     client = Client(
         host=args.host, port=args.port, user=args.user, password=args.password
     )
-    tables = Tables(client, args.databases, args.tables, args.merge_matviews)
+    tables = Tables(client, args.databases, args.tables)
+    if args.merge_matviews:
+        tables.merge_matviews()
+
     logger.debug("Tables are: {}".format(pformat(list(map(str, tables)))))
     if not tables:
         logger.critical("There are no tables with given parameters")

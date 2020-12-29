@@ -21,8 +21,7 @@ class Tables(MutableSequence):
         self,
         client: Client,
         databases: List[str] = None,
-        tables: List[str] = None,
-        merge_matviews: bool = True
+        tables: List[str] = None
     ):
         self.client = client
         self.__list = list()  # type: List[Table]
@@ -30,8 +29,6 @@ class Tables(MutableSequence):
         if databases:
             self._get_tables(databases, tables)
             self._get_columns()
-            if merge_matviews:
-                self._merge_matviews()
 
     def __delitem__(self, i):
         if isinstance(i, int):
@@ -140,7 +137,7 @@ class Tables(MutableSequence):
             column = Column(**c)
             self[column.db_table].add_column(column)
 
-    def _merge_matviews(self):
+    def merge_matviews(self):
         """
         MATERIALIZED VIEW is presented in a database as two tables:
             - `database`.`mat_view_name` - the view
