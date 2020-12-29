@@ -50,16 +50,27 @@ def parse_args() -> Namespace:
     )
     clickhouse = parser.add_argument_group("ClickHouse parameters")
     clickhouse.add_argument(
-        "--host", default="localhost", help="ClickHouse server hostname",
+        "--host",
+        default="localhost",
+        help="ClickHouse server hostname",
     )
     clickhouse.add_argument(
-        "--port", default=9000, type=int, help="ClickHouse server hostname",
+        "--port",
+        default=9000,
+        type=int,
+        help="ClickHouse server hostname",
     )
     clickhouse.add_argument(
-        "-u", "--user", default="default", help="ClickHouse username",
+        "-u",
+        "--user",
+        default="default",
+        help="ClickHouse username",
     )
     clickhouse.add_argument(
-        "-p", "--password", default="", help="ClickHouse username",
+        "-p",
+        "--password",
+        default="",
+        help="ClickHouse username",
     )
     clickhouse.add_argument(
         "-d",
@@ -153,7 +164,8 @@ def run_plantuml(args: Namespace, diagram: str):
                 return
         else:
             args.diagram_output = "{}.{}".format(
-                splitext(args.text_output.name)[0], args.plantuml_format,
+                splitext(args.text_output.name)[0],
+                args.plantuml_format,
             )
     logger.info("Generating file {}".format(args.diagram_output))
     command = ["plantuml", "-p", "-t" + args.plantuml_format]
