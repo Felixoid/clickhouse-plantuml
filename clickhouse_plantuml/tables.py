@@ -98,7 +98,8 @@ class Tables(MutableSequence):
         else:
             query = query.format(name_clause="")
             data = self.client.execute_iter_dict(
-                query, {"ds": tuple(databases)},
+                query,
+                {"ds": tuple(databases)},
             )
 
         self.extend(Table(**r) for r in data)
