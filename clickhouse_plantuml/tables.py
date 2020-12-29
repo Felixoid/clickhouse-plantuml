@@ -102,6 +102,7 @@ class Tables(MutableSequence):
         self.extend(Table(**r) for r in data)
         for t in self:
             t.parse_engine(self.client)
+            t.parse_additional_dependencies()
 
     def get_columns(self):
         """

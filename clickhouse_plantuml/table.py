@@ -2,7 +2,7 @@
 
 # License: Apache-2.0
 # Copyright (C) 2020 Mikhail f. Shiryaev
-
+import re
 from typing import List, Tuple, Optional
 from . import Client, Column
 from token import tok_name
@@ -62,6 +62,15 @@ class Table(object):
         self.primary_key = primary_key
         self.sampling_key = sampling_key
         self.columns = []  # type: List[Column]
+
+    def parse_additional_dependencies(self):
+        """
+        Add target table of MaterializedView to dependencies
+        """
+        if self.engine == 'MaterializedView':
+            match = re.search(re.compile(r"^CREATE MATERIALIZED VIEW \S+ TO (\S+)"), self.create_table_query)
+            if match:
+                self.dependencies.append(match[1])
 
     def add_column(self, column: Column):
         """
