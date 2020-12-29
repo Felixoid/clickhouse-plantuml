@@ -84,6 +84,12 @@ def parse_args() -> Namespace:
         dest="merge_matviews",
         help="if set, target tables of mat views will not be removed",
     )
+    clickhouse.add_argument(
+        "--skip-columns",
+        action="store_true",
+        dest="skip_columns",
+        help="if set, diagram will not contain columns",
+    )
 
     plantuml = parser.add_argument_group("PlantUml parameters")
     plantuml.add_argument(
@@ -180,6 +186,8 @@ def main():
         host=args.host, port=args.port, user=args.user, password=args.password
     )
     tables = Tables(client, args.databases, args.tables)
+    if not args.skip_columns:
+        tables.get_columns()
     if args.merge_matviews:
         tables.merge_matviews()
 

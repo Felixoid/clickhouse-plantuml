@@ -108,6 +108,8 @@ def gen_table_columns(table: Table) -> str:
     if t.sorting_key != t.primary_key:
         # If primary != sorting, it's worth to append it
         table_keys.insert(2, "primary")
+    if len(t.columns) == 0:
+        return ""
 
     code = "==columns==\n"
     for c in t.columns:

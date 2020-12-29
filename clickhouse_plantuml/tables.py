@@ -28,7 +28,6 @@ class Tables(MutableSequence):
         self.as_dict = dict()  # type: Dict[str, Table]
         if databases:
             self._get_tables(databases, tables)
-            self._get_columns()
 
     def __delitem__(self, i):
         if isinstance(i, int):
@@ -104,7 +103,7 @@ class Tables(MutableSequence):
         for t in self:
             t.parse_engine(self.client)
 
-    def _get_columns(self):
+    def get_columns(self):
         """
         Get columns for every table in the instance
         """
