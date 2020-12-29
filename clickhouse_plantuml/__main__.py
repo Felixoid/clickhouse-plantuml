@@ -79,7 +79,7 @@ def parse_args() -> Namespace:
         "be queried from the server",
     )
     clickhouse.add_argument(
-        "--no-merge-mat-views",
+        "--no-merge-matviews",
         action="store_false",
         dest="merge_matviews",
         help="if set, target tables of mat views will not be removed",
