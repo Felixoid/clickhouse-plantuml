@@ -14,7 +14,7 @@ import sys
 from argparse import (
     ArgumentDefaultsHelpFormatter,
     ArgumentParser,
-    FileType,
+    ArgumentTypeError,
     Namespace,
 )
 from hashlib import sha1
@@ -30,6 +30,16 @@ formatter = logging.Formatter("%(levelname)-8s [%(filename)s:%(lineno)d]:\n%(mes
 handler = logging.StreamHandler()
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+
+
+def _open_writable(path: str):
+    """Replacement for deprecated argparse.FileType('w')."""
+    if path == "-":
+        return sys.stdout
+    try:
+        return open(path, "w", encoding="utf-8")  # pylint: disable=consider-using-with
+    except OSError as e:
+        raise ArgumentTypeError(str(e)) from e
 
 
 def parse_args() -> Namespace:
@@ -125,14 +135,13 @@ def parse_args() -> Namespace:
     diagram.add_argument(
         "-o",
         "--text-output",
-        type=FileType("w"),
+        type=_open_writable,
         default="-",
         help="file to write a generated diagram source",
     )
     diagram.add_argument(
         "-O",
         "--diagram-output",
-        type=FileType("w"),
         help="file to write a generated diagram. If `--text-output` is set, "
         "the default name is calculated as `filename_without_extension`."
         "`plantuml-format`. If omitted, the default name is sha1 hexdigest "
@@ -147,7 +156,7 @@ def parse_args() -> Namespace:
 def run_plantuml(args: Namespace, diagram: str):
     diagram_bin = diagram.encode("UTF-8")
     if args.run_plantuml and args.diagram_output is None:
-        if args.text_output == sys.stdout:
+        if args.text_output is sys.stdout:
             file_name = sha1(diagram_bin).hexdigest()
             args.diagram_output = f"{file_name}.{args.plantuml_format}"
             if isfile(args.diagram_output):
@@ -185,7 +194,7 @@ def main():
     )
     diagram = plantuml_tables(tables)
     args.text_output.write(diagram)
-    if args.text_output != sys.stdout:
+    if args.text_output is not sys.stdout:
         args.text_output.close()
 
     if args.run_plantuml:
