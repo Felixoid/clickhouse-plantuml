@@ -5,9 +5,12 @@
 
 import logging
 import re
-from typing import List, Dict
 from collections.abc import MutableSequence
-from . import Client, Column, Table
+from typing import Dict, List
+
+from .client import Client
+from .column import Column
+from .table import Table
 
 logger = logging.getLogger("clickhouse-plantuml")
 
@@ -24,8 +27,8 @@ class Tables(MutableSequence):
         tables: List[str] = None,
     ):
         self.client = client
-        self.__list = list()  # type: List[Table]
-        self.as_dict = dict()  # type: Dict[str, Table]
+        self.__list = []  # type: List[Table]
+        self.as_dict = {}  # type: Dict[str, Table]
         if databases:
             self._get_tables(databases, tables)
             self._get_columns()
@@ -54,20 +57,19 @@ class Tables(MutableSequence):
         self.as_dict[str(t)] = t
 
     def __getitem__(self, i):
-        logger.debug("Check for i {} in self".format(i))
+        logger.debug("Check for i %s in self", i)
         if isinstance(i, int):
             return self.__list[i]
-        elif isinstance(i, str):
-            return self.as_dict[i]
+        return self.as_dict[i]
 
     def __len__(self):
         return len(self.__list)
 
-    def insert(self, i, t):
-        if not isinstance(t, Table):
+    def insert(self, index, value):
+        if not isinstance(value, Table):
             raise ValueError("Must be an instance of Table")
-        self.__list.insert(i, t)
-        self.as_dict[str(t)] = t
+        self.__list.insert(index, value)
+        self.as_dict[str(value)] = value
 
     def _get_tables(self, databases: List[str], tables: List[str] = None):
         query = """
@@ -84,12 +86,14 @@ class Tables(MutableSequence):
                 primary_key,
                 sampling_key
             FROM system.tables
-            WHERE database IN %(ds)s
+            WHERE (database IN %(ds)s OR target_database IN %(ds)s)
                 {name_clause}
             ORDER BY database, name
             """
         if tables:
-            query = query.format(name_clause="AND name IN %(ns)s")
+            query = query.format(
+                name_clause="AND (name IN %(ns)s OR target_table IN %(ns)s)"
+            )
             # Here's a trick to get both normal and
             tables += [".inner." + t for t in tables]
             data = self.client.execute_iter_dict(
@@ -120,7 +124,7 @@ class Tables(MutableSequence):
                 database,
                 table,
                 name,
-                type,
+                type AS column_type,
                 default_kind,
                 default_expression,
                 comment,
@@ -159,14 +163,14 @@ class Tables(MutableSequence):
 
         pattern = re.compile(r"^CREATE MATERIALIZED VIEW \S+ TO (\S+)")
         for mv in mat_views:
-            logger.debug("{} config: {}".format(mv.name, mv.engine_config))
+            logger.debug("%s config: %s", mv.name, mv.engine_config)
             match = re.search(pattern, mv.create_table_query)
             if match:
                 # MV is created TO specific data table
                 data_table = match[1]
             else:
                 # MV is created to the default .inner. data table
-                data_table = "{}..inner.{}".format(mv.database, mv.name)
+                data_table = f"{mv.database}..inner.{mv.name}"
             if data_table not in self.as_dict:
                 # The data table is not in the tables list
                 # Possible reason: it's in another database or not in the

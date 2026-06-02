@@ -1,10 +1,11 @@
 import unittest
 from unittest.mock import patch
+
 from clickhouse_plantuml import plantuml as p
 
 
 class DummyColumn(p.Column):
-    def __init__(self):
+    def __init__(self):  # pylint: disable=super-init-not-called
         pass
 
 
@@ -35,9 +36,7 @@ class TestPlantuml(unittest.TestCase):
         del self.test_tables
 
     def test_plantuml(self):
-        assert (
-            p.plantuml_tables([]) == p.plantuml_header() + p.plantuml_footer()
-        )
+        assert p.plantuml_tables([]) == p.plantuml_header() + p.plantuml_footer()
 
     def test_plantuml_header(self):
         assert p.plantuml_header() == (
@@ -55,16 +54,12 @@ class TestPlantuml(unittest.TestCase):
             "\n"
         )
 
-    @patch.object(
-        p, "gen_tables_dependencies", return_value="mocked_dependencies"
-    )
+    @patch.object(p, "gen_tables_dependencies", return_value="mocked_dependencies")
     @patch.object(p, "gen_table", return_value="mocked_table")
     def test_gen_tables(self, mock_table, mock_dependencies):
         # The substatements will be testet separately
         assert p.gen_tables([]) == "mocked_dependencies"
-        assert p.gen_tables(self.test_tables) == (
-            "mocked_table" "mocked_dependencies"
-        )
+        assert p.gen_tables(self.test_tables) == ("mocked_table" "mocked_dependencies")
         mock_table.assert_called_once_with(self.test_table)
         mock_dependencies.assert_called_with(self.test_tables)
 
@@ -120,7 +115,7 @@ class TestPlantuml(unittest.TestCase):
         )
 
     @patch.object(p, "column_keys", return_value="")
-    def test_gen_table_column(self, mock_column_keys):
+    def test_gen_table_column(self, _mock_column_keys):
         col_date = DummyColumn()
         col_date.__dict__.update(
             {
@@ -166,7 +161,7 @@ class TestPlantuml(unittest.TestCase):
         col = DummyColumn()
         keys = ["partition", "sorting", "primary", "sampling", "noize"]
         for key in keys:
-            setattr(col, "is_in_{}_key".format(key), True)
+            setattr(col, f"is_in_{key}_key", True)
 
         assert p.column_keys(col, keys) == (
             " <size:15><&list-rich></size>"

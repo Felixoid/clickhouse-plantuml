@@ -11,9 +11,6 @@ class Client(OriginalClient):
     Wrapper for clickhouse_driver.Client with execute_dict method
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def execute_dict(self, *args, **kwargs):
         kwargs["with_column_types"] = True
         rows, columns = self.execute(*args, **kwargs)
@@ -23,6 +20,9 @@ class Client(OriginalClient):
     def execute_iter_dict(self, *args, **kwargs):
         kwargs["with_column_types"] = True
         rows = self.execute_iter(*args, **kwargs)
-        columns = next(rows)
+        try:
+            columns = next(rows)
+        except StopIteration:
+            return
         for r in rows:
             yield {columns[i][0]: v for i, v in enumerate(r)}

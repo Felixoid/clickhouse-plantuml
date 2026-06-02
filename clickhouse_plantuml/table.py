@@ -3,14 +3,17 @@
 # License: Apache-2.0
 # Copyright (C) 2020 Mikhail f. Shiryaev
 
-from typing import List, Tuple, Optional
-from . import Client, Column
+from ast import literal_eval
+from io import StringIO
 from token import tok_name
 from tokenize import generate_tokens
-from io import StringIO
+from typing import List, Optional, Tuple
+
+from .client import Client
+from .column import Column
 
 
-class Table(object):
+class Table:
     """
     Represents ClickHouse table from **system.tables**
 
@@ -62,6 +65,10 @@ class Table(object):
         self.primary_key = primary_key
         self.sampling_key = sampling_key
         self.columns = []  # type: List[Column]
+        self.engine_config = []  # type: List[Tuple[str, str]]
+        self.replication_config = []  # type: List[Tuple[str, str]]
+        self._client = None  # type: Optional[Client]
+        self.__engine_args = []  # type: List[str]
 
     def add_column(self, column: Column):
         """
@@ -69,11 +76,9 @@ class Table(object):
         """
         if not isinstance(column, Column):
             raise TypeError("column argument must be a Column")
-        elif not str(self) == column.db_table:
+        if not str(self) == column.db_table:
             raise KeyError(
-                "column {} argument must belong to table: {} not {}".format(
-                    str(column), column.db_table, str(self)
-                )
+                f"column {column} argument must belong to table: {column.db_table} not {self}"
             )
         self.columns.append(column)
 
@@ -87,10 +92,10 @@ class Table(object):
         engine_config : `List[Tuple[str, str]]`
             ordered key-velue parameters for engine
         """
-        self._client = client or None
+        self._client = client
         self._parse_engine_config()
-        self.engine_config = []  # type: List[Tuple[str, str]]
-        self.replication_config = []  # type: List[Tuple[str, str]]
+        self.engine_config = []
+        self.replication_config = []
         if self.engine.startswith("Replicated"):
             self._replicated()
             engine_method = "_" + self.engine[10:].lower()
@@ -179,7 +184,7 @@ class Table(object):
         self._append_engine_config("type")
         k = 1
         while self.__engine_args:
-            self._append_engine_config("k{}".format(k))
+            self._append_engine_config(f"k{k}")
             k += 1
 
     def _buffer(self):
@@ -193,7 +198,7 @@ class Table(object):
         self._append_engine_config("min_bytes")
         self._append_engine_config("max_bytes")
         self.dependencies.append(
-            "{}.{}".format(self.engine_config[0][1], self.engine_config[1][1])
+            f"{self.engine_config[0][1]}.{self.engine_config[1][1]}"
         )
 
     def _append_engine_config(self, name):
@@ -233,7 +238,7 @@ class Table(object):
                 continue
             elif exact_type == "STRING":
                 # Get strings from raw config strings
-                config_element = eval(tok.string)
+                config_element = literal_eval(tok.string)
             else:
                 config_element = tok.string
 
@@ -249,4 +254,4 @@ class Table(object):
         self.__engine_args = engine_args
 
     def __str__(self):
-        return "{}.{}".format(self.database, self.name)
+        return f"{self.database}.{self.name}"

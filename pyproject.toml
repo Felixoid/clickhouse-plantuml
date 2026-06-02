@@ -1,2 +1,71 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "clickhouse-plantuml"
+dynamic = ["version"]
+description = "Generates PlantUML diagrams for clickhouse databases"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [
+    { name = "Mikhail f. Shiryaev", email = "mr.felixoid@gmail.com" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: System Administrators",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Database",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = ["clickhouse-driver"]
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+tests = ["pytest", "pytest-docker", "pylint", "black", "isort"]
+
+[project.urls]
+Homepage = "https://github.com/Felixoid/clickhouse-plantuml"
+
+[project.scripts]
+clickhouse-plantuml = "clickhouse_plantuml.__main__:main"
+
+[tool.hatch.version]
+path = "clickhouse_plantuml/version.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "clickhouse_plantuml/",
+    "tests/",
+    "docs/example.png",
+    "LICENSE",
+    "README.md",
+]
+
 [tool.black]
-line-length = 80
+target-version = ["py310", "py311", "py312", "py313", "py314"]
+
+[tool.isort]
+profile = "black"
+
+[tool.pylint.main]
+ignore-paths = ["venv", "build", "dist"]
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = '''
+          missing-docstring,
+          too-few-public-methods,
+          too-many-arguments,
+          too-many-instance-attributes,
+          too-many-positional-arguments,
+          '''

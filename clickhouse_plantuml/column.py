@@ -4,7 +4,7 @@
 # Copyright (C) 2020 Mikhail f. Shiryaev
 
 
-class Column(object):
+class Column:
     """
     Represents ClickHouse column
     """
@@ -14,7 +14,7 @@ class Column(object):
         database: str,
         table: str,
         name: str,
-        type: str,
+        column_type: str,
         default_kind: str,
         default_expression: str,
         comment: str,
@@ -27,7 +27,7 @@ class Column(object):
         self.database = database
         self.table = table
         self.name = name
-        self.type = type
+        self.type = column_type
         self.default_kind = default_kind
         self.default_expression = default_expression
         self.comment = comment
@@ -39,7 +39,7 @@ class Column(object):
 
     @property
     def db_table(self):
-        return "{}.{}".format(self.database, self.table)
+        return f"{self.database}.{self.table}"
 
     def __str__(self):
         return self.name

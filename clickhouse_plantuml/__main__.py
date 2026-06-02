@@ -11,28 +11,35 @@ create the graphical output.
 
 import logging
 import sys
-
 from argparse import (
-    ArgumentParser,
     ArgumentDefaultsHelpFormatter,
+    ArgumentParser,
+    ArgumentTypeError,
     Namespace,
-    FileType,
 )
 from hashlib import sha1
 from os.path import isfile, splitext
 from pprint import pformat
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 
 from . import Client, Tables
 from .plantuml import plantuml_tables
 
 logger = logging.getLogger("clickhouse-plantuml")
-formatter = logging.Formatter(
-    "%(levelname)-8s [%(filename)s:%(lineno)d]:\n%(message)s"
-)
+formatter = logging.Formatter("%(levelname)-8s [%(filename)s:%(lineno)d]:\n%(message)s")
 handler = logging.StreamHandler()
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+
+
+def _open_writable(path: str):
+    """Replacement for deprecated argparse.FileType('w')."""
+    if path == "-":
+        return sys.stdout
+    try:
+        return open(path, "w", encoding="utf-8")  # pylint: disable=consider-using-with
+    except OSError as e:
+        raise ArgumentTypeError(str(e)) from e
 
 
 def parse_args() -> Namespace:
@@ -128,14 +135,13 @@ def parse_args() -> Namespace:
     diagram.add_argument(
         "-o",
         "--text-output",
-        type=FileType("w"),
+        type=_open_writable,
         default="-",
         help="file to write a generated diagram source",
     )
     diagram.add_argument(
         "-O",
         "--diagram-output",
-        type=FileType("w"),
         help="file to write a generated diagram. If `--text-output` is set, "
         "the default name is calculated as `filename_without_extension`."
         "`plantuml-format`. If omitted, the default name is sha1 hexdigest "
@@ -150,54 +156,45 @@ def parse_args() -> Namespace:
 def run_plantuml(args: Namespace, diagram: str):
     diagram_bin = diagram.encode("UTF-8")
     if args.run_plantuml and args.diagram_output is None:
-        if args.text_output == sys.stdout:
+        if args.text_output is sys.stdout:
             file_name = sha1(diagram_bin).hexdigest()
-            args.diagram_output = "{}.{}".format(
-                file_name, args.plantuml_format
-            )
+            args.diagram_output = f"{file_name}.{args.plantuml_format}"
             if isfile(args.diagram_output):
-                logger.info(
-                    "File {} exists, do not run plantuml".format(
-                        args.diagram_output
-                    )
-                )
+                logger.info("File %s exists, do not run plantuml", args.diagram_output)
                 return
         else:
-            args.diagram_output = "{}.{}".format(
-                splitext(args.text_output.name)[0],
-                args.plantuml_format,
+            args.diagram_output = (
+                f"{splitext(args.text_output.name)[0]}.{args.plantuml_format}"
             )
-    logger.info("Generating file {}".format(args.diagram_output))
+    logger.info("Generating file %s", args.diagram_output)
     command = ["plantuml", "-p", "-t" + args.plantuml_format]
     command.extend(args.plantuml_arguments.split())
-    proc = Popen(command, stdout=PIPE, stdin=PIPE)
-    if proc.stdin is not None:
-        proc.stdin.write(diagram_bin)
+    with Popen(command, stdout=PIPE, stdin=PIPE) as proc:
+        output, _ = proc.communicate(input=diagram_bin)
     with open(args.diagram_output, "bw") as out:
-        out.write(proc.communicate()[0])
+        out.write(output)
 
 
 def main():
     args = parse_args()
     log_levels = [logging.CRITICAL, logging.WARN, logging.INFO, logging.DEBUG]
     logger.setLevel(log_levels[min(args.verbose, 3)])
-    logger.debug("Arguments are {}".format(pformat(args.__dict__)))
+    logger.debug("Arguments are %s", pformat(args.__dict__))
     client = Client(
         host=args.host, port=args.port, user=args.user, password=args.password
     )
     tables = Tables(client, args.databases, args.tables)
-    logger.debug("Tables are: {}".format(pformat(list(map(str, tables)))))
+    logger.debug("Tables are: %s", pformat(list(map(str, tables))))
     if not tables:
         logger.critical("There are no tables with given parameters")
         sys.exit(2)
     logger.debug(
-        "Columns of the first table are {}".format(
-            pformat([c.__dict__ for c in tables[0].columns])
-        )
+        "Columns of the first table are %s",
+        pformat([c.__dict__ for c in tables[0].columns]),
     )
     diagram = plantuml_tables(tables)
     args.text_output.write(diagram)
-    if args.text_output != sys.stdout:
+    if args.text_output is not sys.stdout:
         args.text_output.close()
 
     if args.run_plantuml:
