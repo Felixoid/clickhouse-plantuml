@@ -3,8 +3,9 @@
 # License: Apache-2.0
 # Copyright (C) 2020 Mikhail f. Shiryaev
 
-from . import Column, Table, Tables
 from typing import List
+
+from . import Column, Table, Tables
 
 
 def plantuml_tables(tables: Tables):
@@ -116,9 +117,7 @@ def gen_table_columns(table: Table) -> str:
     for k in table_keys:
         key_string = getattr(t, "{}_key".format(k))
         if key_string:
-            code += "..{}{} key..\n{}\n".format(
-                column_key_sign(k), k, key_string
-            )
+            code += "..{}{} key..\n{}\n".format(column_key_sign(k), k, key_string)
 
     return code
 

@@ -11,25 +11,22 @@ create the graphical output.
 
 import logging
 import sys
-
 from argparse import (
-    ArgumentParser,
     ArgumentDefaultsHelpFormatter,
-    Namespace,
+    ArgumentParser,
     FileType,
+    Namespace,
 )
 from hashlib import sha1
 from os.path import isfile, splitext
 from pprint import pformat
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 
 from . import Client, Tables
 from .plantuml import plantuml_tables
 
 logger = logging.getLogger("clickhouse-plantuml")
-formatter = logging.Formatter(
-    "%(levelname)-8s [%(filename)s:%(lineno)d]:\n%(message)s"
-)
+formatter = logging.Formatter("%(levelname)-8s [%(filename)s:%(lineno)d]:\n%(message)s")
 handler = logging.StreamHandler()
 handler.setFormatter(formatter)
 logger.addHandler(handler)
@@ -152,14 +149,10 @@ def run_plantuml(args: Namespace, diagram: str):
     if args.run_plantuml and args.diagram_output is None:
         if args.text_output == sys.stdout:
             file_name = sha1(diagram_bin).hexdigest()
-            args.diagram_output = "{}.{}".format(
-                file_name, args.plantuml_format
-            )
+            args.diagram_output = "{}.{}".format(file_name, args.plantuml_format)
             if isfile(args.diagram_output):
                 logger.info(
-                    "File {} exists, do not run plantuml".format(
-                        args.diagram_output
-                    )
+                    "File {} exists, do not run plantuml".format(args.diagram_output)
                 )
                 return
         else:

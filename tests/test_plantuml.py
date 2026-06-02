@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import patch
+
 from clickhouse_plantuml import plantuml as p
 
 
@@ -35,9 +36,7 @@ class TestPlantuml(unittest.TestCase):
         del self.test_tables
 
     def test_plantuml(self):
-        assert (
-            p.plantuml_tables([]) == p.plantuml_header() + p.plantuml_footer()
-        )
+        assert p.plantuml_tables([]) == p.plantuml_header() + p.plantuml_footer()
 
     def test_plantuml_header(self):
         assert p.plantuml_header() == (
@@ -55,16 +54,12 @@ class TestPlantuml(unittest.TestCase):
             "\n"
         )
 
-    @patch.object(
-        p, "gen_tables_dependencies", return_value="mocked_dependencies"
-    )
+    @patch.object(p, "gen_tables_dependencies", return_value="mocked_dependencies")
     @patch.object(p, "gen_table", return_value="mocked_table")
     def test_gen_tables(self, mock_table, mock_dependencies):
         # The substatements will be testet separately
         assert p.gen_tables([]) == "mocked_dependencies"
-        assert p.gen_tables(self.test_tables) == (
-            "mocked_table" "mocked_dependencies"
-        )
+        assert p.gen_tables(self.test_tables) == ("mocked_table" "mocked_dependencies")
         mock_table.assert_called_once_with(self.test_table)
         mock_dependencies.assert_called_with(self.test_tables)
 

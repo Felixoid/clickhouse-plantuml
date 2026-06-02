@@ -3,11 +3,12 @@
 # License: Apache-2.0
 # Copyright (C) 2020 Mikhail f. Shiryaev
 
-from typing import List, Tuple, Optional
-from . import Client, Column
+from io import StringIO
 from token import tok_name
 from tokenize import generate_tokens
-from io import StringIO
+from typing import List, Optional, Tuple
+
+from . import Client, Column
 
 
 class Table(object):
