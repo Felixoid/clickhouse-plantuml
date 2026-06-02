@@ -5,8 +5,9 @@
 
 import logging
 import re
-from typing import List, Dict
 from collections.abc import MutableSequence
+from typing import Dict, List
+
 from . import Client, Column, Table
 
 logger = logging.getLogger("clickhouse-plantuml")
@@ -84,12 +85,14 @@ class Tables(MutableSequence):
                 primary_key,
                 sampling_key
             FROM system.tables
-            WHERE database IN %(ds)s
+            WHERE (database IN %(ds)s OR target_database IN %(ds)s)
                 {name_clause}
             ORDER BY database, name
             """
         if tables:
-            query = query.format(name_clause="AND name IN %(ns)s")
+            query = query.format(
+                name_clause="AND (name IN %(ns)s OR target_table IN %(ns)s)"
+            )
             # Here's a trick to get both normal and
             tables += [".inner." + t for t in tables]
             data = self.client.execute_iter_dict(
