@@ -3,12 +3,14 @@
 # License: Apache-2.0
 # Copyright (C) 2020 Mikhail f. Shiryaev
 
+from ast import literal_eval
 from io import StringIO
 from token import tok_name
 from tokenize import generate_tokens
 from typing import List, Optional, Tuple
 
-from . import Client, Column
+from .client import Client
+from .column import Column
 
 
 class Table:
@@ -236,7 +238,7 @@ class Table:
                 continue
             elif exact_type == "STRING":
                 # Get strings from raw config strings
-                config_element = eval(tok.string)
+                config_element = literal_eval(tok.string)
             else:
                 config_element = tok.string
 

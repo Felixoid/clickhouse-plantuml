@@ -64,6 +64,8 @@ ignore-paths = ["venv", "build", "dist"]
 [tool.pylint.'MESSAGES CONTROL']
 disable = '''
           missing-docstring,
+          too-few-public-methods,
           too-many-arguments,
           too-many-instance-attributes,
+          too-many-positional-arguments,
           '''

@@ -5,7 +5,9 @@
 
 from typing import List
 
-from . import Column, Table, Tables
+from .column import Column
+from .table import Table
+from .tables import Tables
 
 
 def plantuml_tables(tables: Tables):

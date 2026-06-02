@@ -160,11 +160,10 @@ def run_plantuml(args: Namespace, diagram: str):
     logger.info("Generating file %s", args.diagram_output)
     command = ["plantuml", "-p", "-t" + args.plantuml_format]
     command.extend(args.plantuml_arguments.split())
-    proc = Popen(command, stdout=PIPE, stdin=PIPE)
-    if proc.stdin is not None:
-        proc.stdin.write(diagram_bin)
+    with Popen(command, stdout=PIPE, stdin=PIPE) as proc:
+        output, _ = proc.communicate(input=diagram_bin)
     with open(args.diagram_output, "bw") as out:
-        out.write(proc.communicate()[0])
+        out.write(output)
 
 
 def main():

@@ -8,7 +8,9 @@ import re
 from collections.abc import MutableSequence
 from typing import Dict, List
 
-from . import Client, Column, Table
+from .client import Client
+from .column import Column
+from .table import Table
 
 logger = logging.getLogger("clickhouse-plantuml")
 
@@ -122,7 +124,7 @@ class Tables(MutableSequence):
                 database,
                 table,
                 name,
-                type,
+                type AS column_type,
                 default_kind,
                 default_expression,
                 comment,

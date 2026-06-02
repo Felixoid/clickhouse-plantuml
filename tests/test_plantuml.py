@@ -5,7 +5,7 @@ from clickhouse_plantuml import plantuml as p
 
 
 class DummyColumn(p.Column):
-    def __init__(self):
+    def __init__(self):  # pylint: disable=super-init-not-called
         pass
 
 
@@ -115,7 +115,7 @@ class TestPlantuml(unittest.TestCase):
         )
 
     @patch.object(p, "column_keys", return_value="")
-    def test_gen_table_column(self, mock_column_keys):
+    def test_gen_table_column(self, _mock_column_keys):
         col_date = DummyColumn()
         col_date.__dict__.update(
             {
