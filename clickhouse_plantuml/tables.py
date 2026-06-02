@@ -55,7 +55,7 @@ class Tables(MutableSequence):
         self.as_dict[str(t)] = t
 
     def __getitem__(self, i):
-        logger.debug("Check for i {} in self".format(i))
+        logger.debug("Check for i %s in self", i)
         if isinstance(i, int):
             return self.__list[i]
         elif isinstance(i, str):
@@ -162,14 +162,14 @@ class Tables(MutableSequence):
 
         pattern = re.compile(r"^CREATE MATERIALIZED VIEW \S+ TO (\S+)")
         for mv in mat_views:
-            logger.debug("{} config: {}".format(mv.name, mv.engine_config))
+            logger.debug("%s config: %s", mv.name, mv.engine_config)
             match = re.search(pattern, mv.create_table_query)
             if match:
                 # MV is created TO specific data table
                 data_table = match[1]
             else:
                 # MV is created to the default .inner. data table
-                data_table = "{}..inner.{}".format(mv.database, mv.name)
+                data_table = f"{mv.database}..inner.{mv.name}"
             if data_table not in self.as_dict:
                 # The data table is not in the tables list
                 # Possible reason: it's in another database or not in the

@@ -61,4 +61,9 @@ profile = "black"
 [tool.pylint.main]
 ignore-paths = ["venv", "build", "dist"]
 
-[tool.pylint.format]
+[tool.pylint.'MESSAGES CONTROL']
+disable = '''
+          missing-docstring,
+          too-many-arguments,
+          too-many-instance-attributes,
+          '''

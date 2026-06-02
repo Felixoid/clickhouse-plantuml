@@ -39,7 +39,7 @@ class Column(object):
 
     @property
     def db_table(self):
-        return "{}.{}".format(self.database, self.table)
+        return f"{self.database}.{self.table}"
 
     def __str__(self):
         return self.name

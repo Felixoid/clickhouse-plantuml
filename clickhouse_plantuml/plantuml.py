@@ -54,7 +54,7 @@ def plantuml_footer():
 def gen_table(table: Table) -> str:
     t = table
     # Table header
-    code = "{}({}) {{\n".format(table_macros(t.engine), str(t))
+    code = f"{table_macros(t.engine)}({t}) {{\n"
 
     code += addSpaces(gen_table_engine(t))
     code += addSpaces(gen_table_columns(t))
@@ -67,16 +67,10 @@ def gen_table(table: Table) -> str:
 def gen_tables_dependencies(tables: Tables) -> str:
     code = ""
     for t in tables:
-        code += "".join(
-            "{} -|> {}\n".format(str(t), d)
-            for d in t.dependencies
-            if d in tables.as_dict
-        )
+        code += "".join(f"{t} -|> {d}\n" for d in t.dependencies if d in tables.as_dict)
 
         code += "".join(
-            "{} -|> {}\n".format(r, str(t))
-            for r in t.rev_dependencies
-            if r in tables.as_dict
+            f"{r} -|> {t}\n" for r in t.rev_dependencies if r in tables.as_dict
         )
     return code
 
@@ -89,16 +83,16 @@ def table_macros(table_type: str):
 
 def gen_table_engine(table: Table) -> str:
     t = table
-    code = "ENGINE=**{}**\n".format(t.engine)
+    code = f"ENGINE=**{t.engine}**\n"
     if t.engine_config:
         code += "..engine config..\n"
     for k, v in t.engine_config:
-        code += "{}: {}\n".format(k, v)
+        code += f"{k}: {v}\n"
 
     if t.replication_config:
         code += "..replication..\n"
     for k, v in t.replication_config:
-        code += "{}: {}\n".format(k, v)
+        code += f"{k}: {v}\n"
 
     return code
 
@@ -112,12 +106,12 @@ def gen_table_columns(table: Table) -> str:
 
     code = "==columns==\n"
     for c in t.columns:
-        code += "{}: {}{}\n".format(c.name, c.type, column_keys(c, table_keys))
+        code += f"{c.name}: {c.type}{column_keys(c, table_keys)}\n"
 
     for k in table_keys:
-        key_string = getattr(t, "{}_key".format(k))
+        key_string = getattr(t, f"{k}_key")
         if key_string:
-            code += "..{}{} key..\n{}\n".format(column_key_sign(k), k, key_string)
+            code += f"..{column_key_sign(k)}{k} key..\n{key_string}\n"
 
     return code
 
@@ -139,8 +133,8 @@ def column_keys(column: Column, table_keys: List[str]) -> str:
     code = ""
 
     for key in table_keys:
-        if getattr(column, "is_in_{}_key".format(key)):
-            code += " {}".format(column_key_sign(key))
+        if getattr(column, f"is_in_{key}_key"):
+            code += f" {column_key_sign(key)}"
     return code
 
 

@@ -149,18 +149,15 @@ def run_plantuml(args: Namespace, diagram: str):
     if args.run_plantuml and args.diagram_output is None:
         if args.text_output == sys.stdout:
             file_name = sha1(diagram_bin).hexdigest()
-            args.diagram_output = "{}.{}".format(file_name, args.plantuml_format)
+            args.diagram_output = f"{file_name}.{args.plantuml_format}"
             if isfile(args.diagram_output):
-                logger.info(
-                    "File {} exists, do not run plantuml".format(args.diagram_output)
-                )
+                logger.info("File %s exists, do not run plantuml", args.diagram_output)
                 return
         else:
-            args.diagram_output = "{}.{}".format(
-                splitext(args.text_output.name)[0],
-                args.plantuml_format,
+            args.diagram_output = (
+                f"{splitext(args.text_output.name)[0]}.{args.plantuml_format}"
             )
-    logger.info("Generating file {}".format(args.diagram_output))
+    logger.info("Generating file %s", args.diagram_output)
     command = ["plantuml", "-p", "-t" + args.plantuml_format]
     command.extend(args.plantuml_arguments.split())
     proc = Popen(command, stdout=PIPE, stdin=PIPE)
@@ -174,19 +171,18 @@ def main():
     args = parse_args()
     log_levels = [logging.CRITICAL, logging.WARN, logging.INFO, logging.DEBUG]
     logger.setLevel(log_levels[min(args.verbose, 3)])
-    logger.debug("Arguments are {}".format(pformat(args.__dict__)))
+    logger.debug("Arguments are %s", pformat(args.__dict__))
     client = Client(
         host=args.host, port=args.port, user=args.user, password=args.password
     )
     tables = Tables(client, args.databases, args.tables)
-    logger.debug("Tables are: {}".format(pformat(list(map(str, tables)))))
+    logger.debug("Tables are: %s", pformat(list(map(str, tables))))
     if not tables:
         logger.critical("There are no tables with given parameters")
         sys.exit(2)
     logger.debug(
-        "Columns of the first table are {}".format(
-            pformat([c.__dict__ for c in tables[0].columns])
-        )
+        "Columns of the first table are %s",
+        pformat([c.__dict__ for c in tables[0].columns]),
     )
     diagram = plantuml_tables(tables)
     args.text_output.write(diagram)

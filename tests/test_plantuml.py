@@ -161,7 +161,7 @@ class TestPlantuml(unittest.TestCase):
         col = DummyColumn()
         keys = ["partition", "sorting", "primary", "sampling", "noize"]
         for key in keys:
-            setattr(col, "is_in_{}_key".format(key), True)
+            setattr(col, f"is_in_{key}_key", True)
 
         assert p.column_keys(col, keys) == (
             " <size:15><&list-rich></size>"
