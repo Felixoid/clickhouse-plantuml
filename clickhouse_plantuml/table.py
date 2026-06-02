@@ -11,7 +11,7 @@ from typing import List, Optional, Tuple
 from . import Client, Column
 
 
-class Table(object):
+class Table:
     """
     Represents ClickHouse table from **system.tables**
 
@@ -63,6 +63,10 @@ class Table(object):
         self.primary_key = primary_key
         self.sampling_key = sampling_key
         self.columns = []  # type: List[Column]
+        self.engine_config = []  # type: List[Tuple[str, str]]
+        self.replication_config = []  # type: List[Tuple[str, str]]
+        self._client = None  # type: Optional[Client]
+        self.__engine_args = []  # type: List[str]
 
     def add_column(self, column: Column):
         """
@@ -70,7 +74,7 @@ class Table(object):
         """
         if not isinstance(column, Column):
             raise TypeError("column argument must be a Column")
-        elif not str(self) == column.db_table:
+        if not str(self) == column.db_table:
             raise KeyError(
                 f"column {column} argument must belong to table: {column.db_table} not {self}"
             )
@@ -86,10 +90,10 @@ class Table(object):
         engine_config : `List[Tuple[str, str]]`
             ordered key-velue parameters for engine
         """
-        self._client = client or None
+        self._client = client
         self._parse_engine_config()
-        self.engine_config = []  # type: List[Tuple[str, str]]
-        self.replication_config = []  # type: List[Tuple[str, str]]
+        self.engine_config = []
+        self.replication_config = []
         if self.engine.startswith("Replicated"):
             self._replicated()
             engine_method = "_" + self.engine[10:].lower()

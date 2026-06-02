@@ -4,7 +4,7 @@
 # Copyright (C) 2020 Mikhail f. Shiryaev
 
 
-class Column(object):
+class Column:
     """
     Represents ClickHouse column
     """

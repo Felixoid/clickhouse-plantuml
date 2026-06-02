@@ -25,8 +25,8 @@ class Tables(MutableSequence):
         tables: List[str] = None,
     ):
         self.client = client
-        self.__list = list()  # type: List[Table]
-        self.as_dict = dict()  # type: Dict[str, Table]
+        self.__list = []  # type: List[Table]
+        self.as_dict = {}  # type: Dict[str, Table]
         if databases:
             self._get_tables(databases, tables)
             self._get_columns()
@@ -58,17 +58,16 @@ class Tables(MutableSequence):
         logger.debug("Check for i %s in self", i)
         if isinstance(i, int):
             return self.__list[i]
-        elif isinstance(i, str):
-            return self.as_dict[i]
+        return self.as_dict[i]
 
     def __len__(self):
         return len(self.__list)
 
-    def insert(self, i, t):
-        if not isinstance(t, Table):
+    def insert(self, index, value):
+        if not isinstance(value, Table):
             raise ValueError("Must be an instance of Table")
-        self.__list.insert(i, t)
-        self.as_dict[str(t)] = t
+        self.__list.insert(index, value)
+        self.as_dict[str(value)] = value
 
     def _get_tables(self, databases: List[str], tables: List[str] = None):
         query = """
