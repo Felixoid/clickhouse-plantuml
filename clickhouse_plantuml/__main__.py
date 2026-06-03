@@ -148,6 +148,14 @@ def parse_args() -> Namespace:
         "out of diagram content.",
     )
     diagram.add_argument(
+        "--exclude-table",
+        action="append",
+        default=[],
+        dest="exclude_tables",
+        metavar="PATTERN",
+        help="exclude tables matching PATTERN, supports glob (e.g. metric_log*). Can be repeated.",
+    )
+    diagram.add_argument(
         "--no-columns",
         action="store_true",
         default=False,
@@ -204,7 +212,7 @@ def main():
     client = Client(
         host=args.host, port=args.port, user=args.user, password=args.password
     )
-    tables = Tables(client, args.databases, args.tables)
+    tables = Tables(client, args.databases, args.tables, args.exclude_tables)
     logger.debug("Tables are: %s", pformat(list(map(str, tables))))
     if not tables:
         logger.critical("There are no tables with given parameters")

@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from clickhouse_plantuml import plantuml as p
 from clickhouse_plantuml.plantuml import DiagramConfig
+from clickhouse_plantuml.tables import Tables
 
 
 class DummyColumn(p.Column):
@@ -10,7 +11,7 @@ class DummyColumn(p.Column):
         pass
 
 
-class TestPlantuml(unittest.TestCase):
+class TestPlantuml(unittest.TestCase):  # pylint: disable=too-many-public-methods
     def setUp(self):
         self.test_table_data = {
             "database": "test_database",
@@ -113,6 +114,29 @@ class TestPlantuml(unittest.TestCase):
             "}\n\n"
         )
         self.test_table.comment = ""
+
+    def test_exclude_tables(self):
+        # pylint: disable=protected-access
+        tables = Tables(None)
+        tables.append(self.test_table)
+        extra_data = dict(self.test_table_data)
+        extra_data.update({"name": "metric_log"})
+        tables.append(p.Table(**extra_data))
+        extra_data2 = dict(self.test_table_data)
+        extra_data2.update({"name": "metric_log_1"})
+        tables.append(p.Table(**extra_data2))
+        assert len(tables) == 3
+        # exact match removes only metric_log
+        tables._exclude_tables(["metric_log"])
+        assert len(tables) == 2
+        assert all(t.name != "metric_log" for t in tables)
+        # glob removes metric_log_1
+        tables._exclude_tables(["metric_log*"])
+        assert len(tables) == 1
+        assert tables[0].name == "test_table"
+        # no-op pattern
+        tables._exclude_tables(["nonexistent*"])
+        assert len(tables) == 1
 
     def test_gen_tables_dependencies(self):
         another_table = dict(self.test_table_data)
