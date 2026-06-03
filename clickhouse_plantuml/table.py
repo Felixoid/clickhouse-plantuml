@@ -71,6 +71,7 @@ class Table:
         self.replication_config = []  # type: List[Tuple[str, str]]
         self._client = None  # type: Optional[Client]
         self.__engine_args = []  # type: List[str]
+        self.__engine_args_raw = []  # type: List[str]
 
     def add_column(self, column: Column):
         """
@@ -106,14 +107,17 @@ class Table:
 
         if hasattr(self, engine_method):
             getattr(self, engine_method)()
+        if self.__engine_args:
+            raw_repr = "(" + ", ".join(self.__engine_args_raw) + ")"
+            self.engine_config.append(("raw", raw_repr))
         delattr(self, "_client")
 
     def _replicated(self):
         """
         Creates and fills :attr:`replication_config` for Replicated* engines
         """
-        self.replication_config.append(("zoo_path", self.__engine_args.pop(0)))
-        self.replication_config.append(("replica", self.__engine_args.pop(0)))
+        self.replication_config.append(("zoo_path", self._pop_engine_arg()))
+        self.replication_config.append(("replica", self._pop_engine_arg()))
 
     def _graphitemergetree(self):
         self._append_engine_config("rollup_config")
@@ -205,7 +209,11 @@ class Table:
 
     def _append_engine_config(self, name):
         "Dangerous method, doesn't check if :attr:`__engine_args` is empty"
-        self.engine_config.append((name, self.__engine_args.pop(0)))
+        self.engine_config.append((name, self._pop_engine_arg()))
+
+    def _pop_engine_arg(self) -> str:
+        "Pops the next engine arg from the parsed list."
+        return self.__engine_args.pop(0)
 
     def _parse_engine_config(self):
         """
@@ -214,6 +222,7 @@ class Table:
         """
         tokens = generate_tokens(StringIO(self.engine_full).readline)
         engine_args = []  # type: List[str]
+        engine_args_raw = []  # type: List[str]
         stack = 0
         for tok in tokens:
             exact_type = tok_name[tok.exact_type]
@@ -237,6 +246,7 @@ class Table:
                 # But this is comming from ClickHouse server,
                 # so we should be safe
                 engine_args.append("")
+                engine_args_raw.append("")
                 continue
             elif exact_type == "STRING":
                 # Get strings from raw config strings
@@ -250,10 +260,13 @@ class Table:
 
             if not engine_args:
                 engine_args.append("")
+                engine_args_raw.append("")
 
             engine_args[-1] += config_element
+            engine_args_raw[-1] += tok.string
 
         self.__engine_args = engine_args
+        self.__engine_args_raw = engine_args_raw
 
     def __str__(self):
         return f"{self.database}.{self.name}"

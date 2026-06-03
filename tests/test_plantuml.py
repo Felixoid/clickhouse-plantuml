@@ -150,6 +150,41 @@ class TestPlantuml(unittest.TestCase):
             "replica: replica_name\n"
         )
 
+    def test_gen_table_engine_unknown(self):
+        """Unknown engine: full args surfaced as single raw entry."""
+        data = dict(self.test_table_data)
+        data.update(
+            {
+                "engine": "SomeNewEngine",
+                "engine_full": "SomeNewEngine('param1', plain_expr)",
+            }
+        )
+        table = p.Table(**data)
+        table.parse_engine()
+        assert p.gen_table_engine(table) == (
+            "ENGINE=**SomeNewEngine**\n"
+            "..engine config..\n"
+            "raw: ('param1', plain_expr)\n"
+        )
+
+    def test_gen_table_engine_partial(self):
+        """Known engine with extra args: full args shown in raw."""
+        data = dict(self.test_table_data)
+        data.update(
+            {
+                "engine": "ReplacingMergeTree",
+                "engine_full": "ReplacingMergeTree('version', is_deleted)",
+            }
+        )
+        table = p.Table(**data)
+        table.parse_engine()
+        assert p.gen_table_engine(table) == (
+            "ENGINE=**ReplacingMergeTree**\n"
+            "..engine config..\n"
+            "version: version\n"
+            "raw: ('version', is_deleted)\n"
+        )
+
     @patch.object(p, "column_keys", return_value="")
     def test_gen_table_column(self, _mock_column_keys):
         config = DiagramConfig()
