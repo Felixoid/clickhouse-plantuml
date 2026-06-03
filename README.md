@@ -1,4 +1,5 @@
 ![Python build and test](https://github.com/Felixoid/clickhouse-plantuml/workflows/Python%20build%20and%20test/badge.svg)
+[![PyPI version](https://img.shields.io/pypi/v/clickhouse-plantuml)](https://pypi.org/project/clickhouse-plantuml/)
 
 # PlantUML generator for ClickHouse tables
 
