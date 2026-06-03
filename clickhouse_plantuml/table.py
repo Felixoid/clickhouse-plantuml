@@ -52,6 +52,7 @@ class Table:
         sorting_key: str,
         primary_key: str,
         sampling_key: str,
+        comment: str = "",
     ):
         self.database = database
         self.name = name
@@ -64,6 +65,7 @@ class Table:
         self.sorting_key = sorting_key
         self.primary_key = primary_key
         self.sampling_key = sampling_key
+        self.comment = comment
         self.columns = []  # type: List[Column]
         self.engine_config = []  # type: List[Tuple[str, str]]
         self.replication_config = []  # type: List[Tuple[str, str]]

@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 
 from clickhouse_plantuml import plantuml as p
+from clickhouse_plantuml.plantuml import DiagramConfig
 
 
 class DummyColumn(p.Column):
@@ -25,6 +26,7 @@ class TestPlantuml(unittest.TestCase):
             "sorting_key": "date",
             "primary_key": "date",
             "sampling_key": "",
+            "comment": "",
         }
         self.test_table = p.Table(**self.test_table_data)
         self.test_table.parse_engine()
@@ -57,10 +59,13 @@ class TestPlantuml(unittest.TestCase):
     @patch.object(p, "gen_tables_dependencies", return_value="mocked_dependencies")
     @patch.object(p, "gen_table", return_value="mocked_table")
     def test_gen_tables(self, mock_table, mock_dependencies):
+        config = DiagramConfig()
         # The substatements will be testet separately
-        assert p.gen_tables([]) == "mocked_dependencies"
-        assert p.gen_tables(self.test_tables) == ("mocked_table" "mocked_dependencies")
-        mock_table.assert_called_once_with(self.test_table)
+        assert p.gen_tables([], config) == "mocked_dependencies"
+        assert p.gen_tables(self.test_tables, config) == (
+            "mocked_table" "mocked_dependencies"
+        )
+        mock_table.assert_called_once_with(self.test_table, config)
         mock_dependencies.assert_called_with(self.test_tables)
 
     def test_plantuml_footer(self):
@@ -69,14 +74,45 @@ class TestPlantuml(unittest.TestCase):
     @patch.object(p, "gen_table_columns", return_value="mocked_columns\n")
     @patch.object(p, "gen_table_engine", return_value="mocked_engine\n")
     def test_gen_table(self, mock_engine, mock_columns):
-        assert p.gen_table(self.test_table) == (
+        config = DiagramConfig()
+        assert p.gen_table(self.test_table, config) == (
             "Table(test_database.test_table) {\n"
             "  mocked_engine\n"
             "  mocked_columns\n"
             "}\n\n"
         )
         mock_engine.assert_called_once_with(self.test_table)
-        mock_columns.assert_called_once_with(self.test_table)
+        mock_columns.assert_called_once_with(self.test_table, config)
+
+    @patch.object(p, "gen_table_columns", return_value="mocked_columns\n")
+    @patch.object(p, "gen_table_engine", return_value="mocked_engine\n")
+    def test_gen_table_with_comment(self, _mock_engine, _mock_columns):
+        config = DiagramConfig()
+        self.test_table.comment = "A useful description"
+        assert p.gen_table(self.test_table, config) == (
+            "Table(test_database.test_table) {\n"
+            "  A useful description\n"
+            "  ==\n"
+            "  mocked_engine\n"
+            "  mocked_columns\n"
+            "}\n\n"
+        )
+        self.test_table.comment = ""
+
+    @patch.object(p, "gen_table_columns", return_value="mocked_columns\n")
+    @patch.object(p, "gen_table_engine", return_value="mocked_engine\n")
+    def test_gen_table_with_comment_truncated(self, _mock_engine, _mock_columns):
+        config = DiagramConfig(comment_length=10)
+        self.test_table.comment = "A very long description that should be truncated"
+        assert p.gen_table(self.test_table, config) == (
+            "Table(test_database.test_table) {\n"
+            "  A very lo\u2026\n"
+            "  ==\n"
+            "  mocked_engine\n"
+            "  mocked_columns\n"
+            "}\n\n"
+        )
+        self.test_table.comment = ""
 
     def test_gen_tables_dependencies(self):
         another_table = dict(self.test_table_data)
@@ -116,6 +152,7 @@ class TestPlantuml(unittest.TestCase):
 
     @patch.object(p, "column_keys", return_value="")
     def test_gen_table_column(self, _mock_column_keys):
+        config = DiagramConfig()
         col_date = DummyColumn()
         col_date.__dict__.update(
             {
@@ -137,7 +174,7 @@ class TestPlantuml(unittest.TestCase):
         self.test_table.add_column(col_date)
         self.test_table.add_column(col_str)
         self.test_table.sorting_key = "date, str"
-        assert p.gen_table_columns(self.test_table) == (
+        assert p.gen_table_columns(self.test_table, config) == (
             "==columns==\n"
             "date: Date\n"
             "str: String\n"
@@ -170,3 +207,28 @@ class TestPlantuml(unittest.TestCase):
             " <size:15><&collapse-down></size>"
             " "
         )
+
+    def test_truncate_type(self):
+        # Short string — no truncation
+        assert p.truncate_type("Date", 80) == "Date"
+        # Exactly at limit — no truncation
+        s = "E" * 80
+        assert p.truncate_type(s, 80) == s
+        # Over limit — prefix + … + last 3 chars
+        long_type = "Enum16('SHOW DATABASES' = 0, 'SHOW TABLES' = 1, ...)"
+        result = p.truncate_type(long_type, 20)
+        assert len(result) == 20
+        assert result.endswith(long_type[-3:])
+        assert "\u2026" in result
+
+    def test_truncate_comment(self):
+        # Short string — no truncation
+        assert p.truncate_comment("short", 80) == "short"
+        # Exactly at limit — no truncation
+        s = "x" * 80
+        assert p.truncate_comment(s, 80) == s
+        # Over limit — truncated with …
+        long_comment = "A" * 100
+        result = p.truncate_comment(long_comment, 80)
+        assert len(result) == 80
+        assert result.endswith("\u2026")

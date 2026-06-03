@@ -23,7 +23,7 @@ from pprint import pformat
 from subprocess import PIPE, Popen
 
 from . import Client, Tables
-from .plantuml import plantuml_tables
+from .plantuml import DiagramConfig, plantuml_tables
 
 logger = logging.getLogger("clickhouse-plantuml")
 formatter = logging.Formatter("%(levelname)-8s [%(filename)s:%(lineno)d]:\n%(message)s")
@@ -147,6 +147,20 @@ def parse_args() -> Namespace:
         "`plantuml-format`. If omitted, the default name is sha1 hexdigest "
         "out of diagram content.",
     )
+    diagram.add_argument(
+        "--type-length",
+        type=int,
+        default=80,
+        dest="type_length",
+        help="truncate column type strings longer than this (shows first chars, …, last 3)",
+    )
+    diagram.add_argument(
+        "--comment-length",
+        type=int,
+        default=80,
+        dest="comment_length",
+        help="truncate table comment strings longer than this",
+    )
 
     args = parser.parse_args()
     args.databases = args.databases or ["default"]
@@ -192,7 +206,9 @@ def main():
         "Columns of the first table are %s",
         pformat([c.__dict__ for c in tables[0].columns]),
     )
-    diagram = plantuml_tables(tables)
+    diagram = plantuml_tables(
+        tables, DiagramConfig(args.type_length, args.comment_length)
+    )
     args.text_output.write(diagram)
     if args.text_output is not sys.stdout:
         args.text_output.close()

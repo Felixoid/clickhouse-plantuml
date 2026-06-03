@@ -84,7 +84,8 @@ class Tables(MutableSequence):
                 partition_key,
                 sorting_key,
                 primary_key,
-                sampling_key
+                sampling_key,
+                comment
             FROM system.tables
             WHERE (database IN %(ds)s OR target_database IN %(ds)s)
                 {name_clause}
