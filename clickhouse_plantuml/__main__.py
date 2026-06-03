@@ -57,15 +57,9 @@ def parse_args() -> Namespace:
     )
     clickhouse = parser.add_argument_group("ClickHouse parameters")
     clickhouse.add_argument(
-        "--host",
-        default="localhost",
-        help="ClickHouse server hostname",
-    )
-    clickhouse.add_argument(
-        "--port",
-        default=9000,
-        type=int,
-        help="ClickHouse server hostname",
+        "--url",
+        default="http://localhost:8123",
+        help="ClickHouse HTTP(S) URL. Default port for HTTP is 8123, for HTTPS is 8443.",
     )
     clickhouse.add_argument(
         "-u",
@@ -76,8 +70,8 @@ def parse_args() -> Namespace:
     clickhouse.add_argument(
         "-p",
         "--password",
-        default="",
-        help="ClickHouse username",
+        default=None,
+        help="ClickHouse password (sent as X-ClickHouse-Key header; omitted if not set)",
     )
     clickhouse.add_argument(
         "-d",
@@ -209,9 +203,7 @@ def main():
     log_levels = [logging.CRITICAL, logging.WARN, logging.INFO, logging.DEBUG]
     logger.setLevel(log_levels[min(args.verbose, 3)])
     logger.debug("Arguments are %s", pformat(args.__dict__))
-    client = Client(
-        host=args.host, port=args.port, user=args.user, password=args.password
-    )
+    client = Client(url=args.url, user=args.user, password=args.password)
     tables = Tables(client, args.databases, args.tables, args.exclude_tables)
     logger.debug("Tables are: %s", pformat(list(map(str, tables))))
     if not tables:
