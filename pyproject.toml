@@ -27,8 +27,9 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Visualization",
     "Topic :: Software Development :: Documentation",
     "Topic :: Software Development :: Libraries",
+    "License :: OSI Approved :: Apache Software License",
 ]
-dependencies = ["clickhouse-driver"]
+dependencies = []
 requires-python = ">=3.10"
 
 [project.optional-dependencies]
@@ -36,6 +37,8 @@ tests = ["pytest", "pytest-docker", "pylint", "black", "isort"]
 
 [project.urls]
 Homepage = "https://github.com/Felixoid/clickhouse-plantuml"
+Source = "https://github.com/Felixoid/clickhouse-plantuml"
+"Bug Tracker" = "https://github.com/Felixoid/clickhouse-plantuml/issues"
 
 [project.scripts]
 clickhouse-plantuml = "clickhouse_plantuml.__main__:main"

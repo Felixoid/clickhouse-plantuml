@@ -6,6 +6,7 @@
 import logging
 import re
 from collections.abc import MutableSequence
+from fnmatch import fnmatch
 from typing import Dict, List
 
 from .client import Client
@@ -25,12 +26,15 @@ class Tables(MutableSequence):
         client: Client,
         databases: List[str] = None,
         tables: List[str] = None,
+        exclude_tables: List[str] = None,
     ):
         self.client = client
         self.__list = []  # type: List[Table]
         self.as_dict = {}  # type: Dict[str, Table]
         if databases:
             self._get_tables(databases, tables)
+            if exclude_tables:
+                self._exclude_tables(exclude_tables)
             self._get_columns()
             self._merge_matviews()
 
@@ -71,6 +75,16 @@ class Tables(MutableSequence):
         self.__list.insert(index, value)
         self.as_dict[str(value)] = value
 
+    def _exclude_tables(self, patterns: List[str]):
+        """
+        Remove tables whose name matches any of the given glob patterns.
+        Exact names (no wildcards) and glob patterns (e.g. metric_log*) are both supported.
+        """
+        to_remove = [t for t in self if any(fnmatch(t.name, p) for p in patterns)]
+        for t in to_remove:
+            logger.debug("Excluding table %s", t)
+            self.remove(t)
+
     def _get_tables(self, databases: List[str], tables: List[str] = None):
         query = """
             SELECT
@@ -84,7 +98,8 @@ class Tables(MutableSequence):
                 partition_key,
                 sorting_key,
                 primary_key,
-                sampling_key
+                sampling_key,
+                comment
             FROM system.tables
             WHERE (database IN %(ds)s OR target_database IN %(ds)s)
                 {name_clause}

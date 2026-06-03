@@ -3,6 +3,7 @@
 # License: Apache-2.0
 # Copyright (C) 2020 Mikhail f. Shiryaev
 
+from dataclasses import dataclass, field
 from typing import List
 
 from .column import Column
@@ -10,8 +11,30 @@ from .table import Table
 from .tables import Tables
 
 
-def plantuml_tables(tables: Tables):
-    return plantuml_header() + gen_tables(tables) + plantuml_footer()
+@dataclass
+class DiagramConfig:
+    type_length: int = field(default=80)
+    comment_length: int = field(default=80)
+    no_columns: bool = field(default=False)
+
+
+def truncate_type(s: str, max_length: int) -> str:
+    """Truncate a type string, preserving the last 3 chars as a closing hint."""
+    if len(s) <= max_length:
+        return s
+    return s[: max_length - 4] + "\u2026" + s[-3:]
+
+
+def truncate_comment(s: str, max_length: int) -> str:
+    """Truncate a comment string."""
+    if len(s) <= max_length:
+        return s
+    return s[: max_length - 1] + "\u2026"
+
+
+def plantuml_tables(tables: Tables, config: DiagramConfig = None):
+    config = config or DiagramConfig()
+    return plantuml_header() + gen_tables(tables, config) + plantuml_footer()
 
 
 def plantuml_header():
@@ -37,13 +60,13 @@ def plantuml_header():
     return header
 
 
-def gen_tables(tables: Tables):
+def gen_tables(tables: Tables, config: DiagramConfig):
     """
     Generates the PlantUML source code out of the Tables object
     """
     code = ""
     for t in tables:
-        code += gen_table(t)
+        code += gen_table(t, config)
 
     code += gen_tables_dependencies(tables)
     return code
@@ -53,13 +76,17 @@ def plantuml_footer():
     return "@enduml\n"
 
 
-def gen_table(table: Table) -> str:
+def gen_table(table: Table, config: DiagramConfig) -> str:
     t = table
     # Table header
     code = f"{table_macros(t.engine)}({t}) {{\n"
 
+    if t.comment:
+        code += add_spaces(f"{truncate_comment(t.comment, config.comment_length)}\n")
+        code += add_spaces("==\n")
+
     code += add_spaces(gen_table_engine(t))
-    code += add_spaces(gen_table_columns(t))
+    code += add_spaces(gen_table_columns(t, config))
 
     # Table footer
     code += "}\n\n"
@@ -99,7 +126,9 @@ def gen_table_engine(table: Table) -> str:
     return code
 
 
-def gen_table_columns(table: Table) -> str:
+def gen_table_columns(table: Table, config: DiagramConfig) -> str:
+    if config.no_columns:
+        return ""
     t = table
     table_keys = ["partition", "sorting", "sampling"]
     if t.sorting_key != t.primary_key:
@@ -108,7 +137,8 @@ def gen_table_columns(table: Table) -> str:
 
     code = "==columns==\n"
     for c in t.columns:
-        code += f"{c.name}: {c.type}{column_keys(c, table_keys)}\n"
+        col_type = truncate_type(c.type, config.type_length)
+        code += f"{c.name}: {col_type}{column_keys(c, table_keys)}\n"
 
     for k in table_keys:
         key_string = getattr(t, f"{k}_key")

@@ -1,4 +1,5 @@
-![Python package](https://github.com/Felixoid/clickhouse-plantuml/workflows/Python%20package/badge.svg)
+![Python build and test](https://github.com/Felixoid/clickhouse-plantuml/workflows/Python%20build%20and%20test/badge.svg)
+[![PyPI version](https://img.shields.io/pypi/v/clickhouse-plantuml)](https://pypi.org/project/clickhouse-plantuml/)
 
 # PlantUML generator for ClickHouse tables
 
@@ -97,6 +98,6 @@ And how it looks after running PlantUML:
 ## Usage
 
 ```bash
-python setup.py install
+pip install clickhouse-plantuml
 clickhouse-plantuml
 ```

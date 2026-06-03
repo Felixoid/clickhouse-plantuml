@@ -23,7 +23,7 @@ from pprint import pformat
 from subprocess import PIPE, Popen
 
 from . import Client, Tables
-from .plantuml import plantuml_tables
+from .plantuml import DiagramConfig, plantuml_tables
 
 logger = logging.getLogger("clickhouse-plantuml")
 formatter = logging.Formatter("%(levelname)-8s [%(filename)s:%(lineno)d]:\n%(message)s")
@@ -57,15 +57,9 @@ def parse_args() -> Namespace:
     )
     clickhouse = parser.add_argument_group("ClickHouse parameters")
     clickhouse.add_argument(
-        "--host",
-        default="localhost",
-        help="ClickHouse server hostname",
-    )
-    clickhouse.add_argument(
-        "--port",
-        default=9000,
-        type=int,
-        help="ClickHouse server hostname",
+        "--url",
+        default="http://localhost:8123",
+        help="ClickHouse HTTP(S) URL. Default port for HTTP is 8123, for HTTPS is 8443.",
     )
     clickhouse.add_argument(
         "-u",
@@ -76,8 +70,8 @@ def parse_args() -> Namespace:
     clickhouse.add_argument(
         "-p",
         "--password",
-        default="",
-        help="ClickHouse username",
+        default=None,
+        help="ClickHouse password (sent as X-ClickHouse-Key header; omitted if not set)",
     )
     clickhouse.add_argument(
         "-d",
@@ -147,6 +141,35 @@ def parse_args() -> Namespace:
         "`plantuml-format`. If omitted, the default name is sha1 hexdigest "
         "out of diagram content.",
     )
+    diagram.add_argument(
+        "--exclude-table",
+        action="append",
+        default=[],
+        dest="exclude_tables",
+        metavar="PATTERN",
+        help="exclude tables matching PATTERN, supports glob (e.g. metric_log*). Can be repeated.",
+    )
+    diagram.add_argument(
+        "--no-columns",
+        action="store_true",
+        default=False,
+        dest="no_columns",
+        help="omit column listings — useful for overview diagrams of large databases",
+    )
+    diagram.add_argument(
+        "--type-length",
+        type=int,
+        default=80,
+        dest="type_length",
+        help="truncate column type strings longer than this (shows first chars, …, last 3)",
+    )
+    diagram.add_argument(
+        "--comment-length",
+        type=int,
+        default=80,
+        dest="comment_length",
+        help="truncate table comment strings longer than this",
+    )
 
     args = parser.parse_args()
     args.databases = args.databases or ["default"]
@@ -180,10 +203,8 @@ def main():
     log_levels = [logging.CRITICAL, logging.WARN, logging.INFO, logging.DEBUG]
     logger.setLevel(log_levels[min(args.verbose, 3)])
     logger.debug("Arguments are %s", pformat(args.__dict__))
-    client = Client(
-        host=args.host, port=args.port, user=args.user, password=args.password
-    )
-    tables = Tables(client, args.databases, args.tables)
+    client = Client(url=args.url, user=args.user, password=args.password)
+    tables = Tables(client, args.databases, args.tables, args.exclude_tables)
     logger.debug("Tables are: %s", pformat(list(map(str, tables))))
     if not tables:
         logger.critical("There are no tables with given parameters")
@@ -192,7 +213,10 @@ def main():
         "Columns of the first table are %s",
         pformat([c.__dict__ for c in tables[0].columns]),
     )
-    diagram = plantuml_tables(tables)
+    diagram = plantuml_tables(
+        tables,
+        DiagramConfig(args.type_length, args.comment_length, args.no_columns),
+    )
     args.text_output.write(diagram)
     if args.text_output is not sys.stdout:
         args.text_output.close()
