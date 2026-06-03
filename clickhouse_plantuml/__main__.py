@@ -148,6 +148,13 @@ def parse_args() -> Namespace:
         "out of diagram content.",
     )
     diagram.add_argument(
+        "--no-columns",
+        action="store_true",
+        default=False,
+        dest="no_columns",
+        help="omit column listings — useful for overview diagrams of large databases",
+    )
+    diagram.add_argument(
         "--type-length",
         type=int,
         default=80,
@@ -207,7 +214,8 @@ def main():
         pformat([c.__dict__ for c in tables[0].columns]),
     )
     diagram = plantuml_tables(
-        tables, DiagramConfig(args.type_length, args.comment_length)
+        tables,
+        DiagramConfig(args.type_length, args.comment_length, args.no_columns),
     )
     args.text_output.write(diagram)
     if args.text_output is not sys.stdout:

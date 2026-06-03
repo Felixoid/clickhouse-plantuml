@@ -15,6 +15,7 @@ from .tables import Tables
 class DiagramConfig:
     type_length: int = field(default=80)
     comment_length: int = field(default=80)
+    no_columns: bool = field(default=False)
 
 
 def truncate_type(s: str, max_length: int) -> str:
@@ -126,6 +127,8 @@ def gen_table_engine(table: Table) -> str:
 
 
 def gen_table_columns(table: Table, config: DiagramConfig) -> str:
+    if config.no_columns:
+        return ""
     t = table
     table_keys = ["partition", "sorting", "sampling"]
     if t.sorting_key != t.primary_key:

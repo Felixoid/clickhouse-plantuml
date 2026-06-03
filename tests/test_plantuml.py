@@ -186,6 +186,10 @@ class TestPlantuml(unittest.TestCase):
             "date\n"
         )
 
+    def test_gen_table_columns_no_columns(self):
+        config = DiagramConfig(no_columns=True)
+        assert p.gen_table_columns(self.test_table, config) == ""
+
     def test_key_sign(self):
         assert p.column_key_sign("any random thing") == ""
         sign = "<size:15><&{}></size>"
