@@ -32,9 +32,9 @@ jobs:
       - name: Lint with pylint
         run: |
           pylint clickhouse_plantuml
-      - name: Test with pytest
+      - name: Run tests
         run: |
-          pytest
+          python -m unittest discover -s tests/
       - name: Check the version matches the tag
         run: |
           VERSION=$(python -c "from clickhouse_plantuml import __version__; print(__version__)")
